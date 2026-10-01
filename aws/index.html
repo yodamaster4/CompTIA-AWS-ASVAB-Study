@@ -270,6 +270,19 @@ p.lead{font-size:18px;max-width:62ch}
 .seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--surface);box-shadow:inset 0 -4px 0 var(--accent)}
 @media (max-width:760px){.seg{margin-left:0}.seg button{max-width:none;flex:1 1 100%}}
 
+
+/* hands-on activities */
+.tin{width:100%;font:inherit;font-size:18px;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:9px;padding:12px 14px}
+.tin:focus{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--ink)}
+.tbox{background:#0F1A2A;color:#D8E2F0;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;max-height:46vh;overflow:auto;margin:12px 0}
+.tbox .tl{white-space:pre-wrap}.tbox .tl .pr{color:#4CC58A}
+.tbox pre{margin:2px 0 10px;white-space:pre-wrap;font:inherit;color:#B9C7DB}
+.tbox pre.bad{color:#F07A7A}
+.tbox.sheet{background:var(--sunk);color:var(--ink);font-family:var(--body);font-size:16px}
+.tbox.sheet .tl .pr{color:var(--ok);font-weight:700}.tbox.sheet pre{color:var(--muted);font-family:var(--body)}.tbox.sheet pre.bad{color:var(--bad)}
+.tprompt{display:flex;align-items:center;gap:10px}.tprompt .pr{font-family:var(--mono);color:var(--muted);white-space:nowrap;font-size:14px}
+.tprompt .tin{font-family:var(--mono);font-size:16px}
+
 </style>
 </head>
 <body>
@@ -1541,6 +1554,116 @@ LAB({ id: "l12", tags: "m2.2 m3.1 m4.2", title: "Lab 12: Train XGBoost on Spot a
     ["Why did a request after a quiet period take longer?", ["Throttling", "A serverless inference cold start", "Model drift", "Guardrails"], 1, "Serverless endpoints scale to zero, so the first request after idle starts a container."]
   ] });
 
+
+// ===== HANDS-ON CONTENT =====
+PACK.sims = PACK.sims || []; PACK.fixes = PACK.fixes || [];
+PACK.simLabel = "CLI labs";
+PACK.simDesc = "Type the real AWS CLI commands in a safe simulator. No account or charges needed.";
+PACK.simLead = "Type each command yourself. Stuck? Hint gives a nudge, Show me reveals the answer. Score counts steps you nailed on the first try.";
+PACK.fixDesc = "Spot the insecure or fragile line in a real policy, rule set, or template, then pick the repair.";
+function SIM(id, tg, skin, title, brief, steps, tip) { PACK.sims.push({ id, x: tags(tg), skin, title, brief, tip, prompt: "you@cloudshell:~$", steps: steps.map(([ask, ok, ans, out, hint, why]) => ({ ask, ok: ok.map(r => r.source), ans, out, hint, why })) }); }
+function FIXSHUF(lines) { return lines.map(l => { if (l.length < 2) return l; const right = l[1][l[2]], o = l[1].slice(); for (let i = o.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [o[i], o[j]] = [o[j], o[i]]; } return [l[0], o, o.indexOf(right), l[3]]; }); }
+function FIX(id, tg, title, brief, lines, tip) { PACK.fixes.push({ id, x: tags(tg), title, brief, lines: FIXSHUF(lines), tip }); }
+
+SIM("s3lock", "s1.3 o4.2", "term", "Lock down an S3 bucket", "Create a bucket for audit logs, then make sure it can never be public and keeps history.", [
+  ["Create a bucket named audit-logs-demo with the s3 mb command.", [/aws\s+s3\s+mb\s+s3:\/\/audit-logs-demo/], "aws s3 mb s3://audit-logs-demo",
+    "make_bucket: audit-logs-demo", "aws s3 mb s3://name", "New buckets block public ACLs by default now, but you should still set Block Public Access explicitly."],
+  ["Turn on all four Block Public Access settings for the bucket with s3api.", [/aws\s+s3api\s+put-public-access-block\s+.*--bucket\s+audit-logs-demo\s+.*(BlockPublicAcls=true.*IgnorePublicAcls=true.*BlockPublicPolicy=true.*RestrictPublicBuckets=true|true.*true.*true.*true)/, /aws\s+s3api\s+put-public-access-block\s+.*--bucket\s+audit-logs-demo\s+.*--public-access-block-configuration/], "aws s3api put-public-access-block --bucket audit-logs-demo --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true",
+    "(no output: success)", "s3api put-public-access-block with --bucket and --public-access-block-configuration.", "Block Public Access overrides ACLs and policies that would otherwise expose data."],
+  ["Enable versioning so deleted or overwritten objects can be recovered.", [/aws\s+s3api\s+put-bucket-versioning\s+.*--bucket\s+audit-logs-demo\s+.*Status=Enabled/], "aws s3api put-bucket-versioning --bucket audit-logs-demo --versioning-configuration Status=Enabled",
+    "(no output: success)", "put-bucket-versioning with --versioning-configuration Status=Enabled.", "Versioning protects against accidental deletes and ransomware-style overwrites."],
+  ["Verify the public access block is in place.", [/aws\s+s3api\s+get-public-access-block\s+.*--bucket\s+audit-logs-demo/], "aws s3api get-public-access-block --bucket audit-logs-demo",
+    "{ \"PublicAccessBlockConfiguration\": { \"BlockPublicAcls\": true, \"IgnorePublicAcls\": true, \"BlockPublicPolicy\": true, \"RestrictPublicBuckets\": true } }", "get-public-access-block with the bucket name.", "Always verify. A command that returned no output proved nothing yet."]
+], "Private by default: Block Public Access on, versioning on, then verify.");
+
+SIM("iamaudit", "s1.1 o4.1", "term", "Investigate and shrink an IAM user's access", "A developer has far too much power. Find it and apply least privilege.", [
+  ["Show which identity your CLI is using right now.", [/aws\s+sts\s+get-caller-identity/], "aws sts get-caller-identity",
+    "{ \"UserId\": \"AIDAEXAMPLE\", \"Account\": \"111122223333\", \"Arn\": \"arn:aws:iam::111122223333:user/admin-audit\" }", "sts get-caller-identity", "Always check who you are before changing permissions."],
+  ["List the managed policies attached to the user dev1.", [/aws\s+iam\s+list-attached-user-policies\s+--user-name\s+dev1/], "aws iam list-attached-user-policies --user-name dev1",
+    "AttachedPolicies:\n - AdministratorAccess (arn:aws:iam::aws:policy/AdministratorAccess)", "iam list-attached-user-policies --user-name dev1", "AdministratorAccess on a developer is a least-privilege violation."],
+  ["Detach AdministratorAccess from dev1.", [/aws\s+iam\s+detach-user-policy\s+--user-name\s+dev1\s+--policy-arn\s+arn:aws:iam::aws:policy\/AdministratorAccess/, /aws\s+iam\s+detach-user-policy\s+--policy-arn\s+arn:aws:iam::aws:policy\/AdministratorAccess\s+--user-name\s+dev1/], "aws iam detach-user-policy --user-name dev1 --policy-arn arn:aws:iam::aws:policy/AdministratorAccess",
+    "(no output: success)", "iam detach-user-policy with --user-name and --policy-arn.", "Then attach a narrow custom policy, ideally through a group or role rather than directly to a user."],
+  ["Find unused access keys: list dev1's access keys.", [/aws\s+iam\s+list-access-keys\s+--user-name\s+dev1/], "aws iam list-access-keys --user-name dev1",
+    "AccessKeyId AKIAEXAMPLE1  Status: Active  Created: 2023-02-01", "iam list-access-keys --user-name dev1", "Old, long-lived keys are a common breach path. Prefer roles with temporary credentials."]
+], "Least privilege: start with no access and add only what the job needs. Prefer roles over long-lived keys.");
+
+SIM("sgfix", "s1.2 o5.3", "term", "Close an exposed security group", "SSH is open to the whole internet. Replace it with a tight rule.", [
+  ["Describe security group sg-0abc123 to see its inbound rules.", [/aws\s+ec2\s+describe-security-groups\s+.*sg-0abc123/], "aws ec2 describe-security-groups --group-ids sg-0abc123",
+    "IpPermissions:\n tcp 22   0.0.0.0/0\n tcp 443  0.0.0.0/0", "ec2 describe-security-groups --group-ids", "Port 22 open to 0.0.0.0/0 means every scanner on the internet can try your SSH."],
+  ["Revoke the inbound TCP 22 rule from 0.0.0.0/0.", [/aws\s+ec2\s+revoke-security-group-ingress\s+.*sg-0abc123.*(--protocol\s+tcp.*--port\s+22.*--cidr\s+0\.0\.0\.0\/0|--port\s+22.*--protocol\s+tcp.*--cidr\s+0\.0\.0\.0\/0|--cidr\s+0\.0\.0\.0\/0.*22)/], "aws ec2 revoke-security-group-ingress --group-id sg-0abc123 --protocol tcp --port 22 --cidr 0.0.0.0/0",
+    "Return: true", "revoke-security-group-ingress with --group-id, --protocol tcp, --port 22, --cidr 0.0.0.0/0.", "Security groups are stateful allow lists, so removing the allow removes the access."],
+  ["Allow SSH only from your office address 198.51.100.20 (a /32).", [/aws\s+ec2\s+authorize-security-group-ingress\s+.*sg-0abc123.*(--port\s+22.*--cidr\s+198\.51\.100\.20\/32|--cidr\s+198\.51\.100\.20\/32.*--port\s+22)/], "aws ec2 authorize-security-group-ingress --group-id sg-0abc123 --protocol tcp --port 22 --cidr 198.51.100.20/32",
+    "Return: true", "authorize-security-group-ingress, port 22, cidr 198.51.100.20/32.", "A /32 is exactly one IP address. Even better: skip SSH entirely and use Systems Manager Session Manager."]
+], "Security groups: deny by default, allow the minimum, and use a /32 or another security group as the source.");
+
+SIM("cwdebug", "o1.1 o1.2", "term", "Chase an alarm into the logs", "A CloudWatch alarm fired at 2 AM. Find out what broke.", [
+  ["List alarms that are currently in the ALARM state.", [/aws\s+cloudwatch\s+describe-alarms\s+.*--state-value\s+ALARM/], "aws cloudwatch describe-alarms --state-value ALARM",
+    "AlarmName: orders-lambda-errors  State: ALARM  Metric: Errors  Namespace: AWS/Lambda", "cloudwatch describe-alarms with --state-value ALARM", "Metrics and alarms tell you that something is wrong. Logs tell you why."],
+  ["Search the log group /aws/lambda/orders for events matching ERROR.", [/aws\s+logs\s+filter-log-events\s+.*--log-group-name\s+\/aws\/lambda\/orders\s+.*--filter-pattern\s+["']?ERROR/, /aws\s+logs\s+filter-log-events\s+.*--filter-pattern\s+["']?ERROR["']?\s+.*--log-group-name\s+\/aws\/lambda\/orders/], "aws logs filter-log-events --log-group-name /aws/lambda/orders --filter-pattern ERROR",
+    "ERROR AccessDeniedException: User is not authorized to perform dynamodb:PutItem on table Orders", "logs filter-log-events with --log-group-name and --filter-pattern.", "AccessDenied points to the function's execution role missing a permission."],
+  ["Stream the last 30 minutes of that log group live with the tail command.", [/aws\s+logs\s+tail\s+\/aws\/lambda\/orders\s+.*--since\s+30m/, /aws\s+logs\s+tail\s+\/aws\/lambda\/orders\s+.*--follow/], "aws logs tail /aws/lambda/orders --since 30m --follow",
+    "(streaming) ... START RequestId ... END RequestId", "logs tail takes the log group name and --since 30m.", "After you add dynamodb:PutItem to the execution role, errors should stop and the alarm return to OK."]
+], "Alarm first, logs second, fix the cause, then confirm the alarm clears.");
+
+SIM("snap", "o2.3 s2.2", "term", "Back up and restore an EBS volume", "Practice the snapshot workflow you will be asked about on the exam.", [
+  ["Create a snapshot of volume vol-0123456789 with a description.", [/aws\s+ec2\s+create-snapshot\s+.*--volume-id\s+vol-0123456789/], "aws ec2 create-snapshot --volume-id vol-0123456789 --description \"nightly\"",
+    "SnapshotId: snap-0abc999  State: pending", "ec2 create-snapshot --volume-id", "Snapshots are incremental and stored durably in S3-backed storage managed by AWS."],
+  ["List only your own snapshots.", [/aws\s+ec2\s+describe-snapshots\s+.*--owner-ids\s+self/], "aws ec2 describe-snapshots --owner-ids self",
+    "snap-0abc999  completed  100%", "describe-snapshots with --owner-ids self. Without it you list public ones too.", "A backup you never listed or tested is a guess."],
+  ["Restore: create a new volume from snap-0abc999 in us-east-1a.", [/aws\s+ec2\s+create-volume\s+.*--snapshot-id\s+snap-0abc999.*--availability-zone\s+us-east-1a/, /aws\s+ec2\s+create-volume\s+.*--availability-zone\s+us-east-1a.*--snapshot-id\s+snap-0abc999/], "aws ec2 create-volume --snapshot-id snap-0abc999 --availability-zone us-east-1a",
+    "VolumeId: vol-0def456  State: creating", "create-volume with --snapshot-id and --availability-zone.", "Volumes live in one AZ; snapshots are Regional, so you can restore into any AZ in the Region."]
+], "Snapshots are Regional and incremental. Volumes are tied to one Availability Zone.");
+
+SIM("cfn", "o3.1", "term", "Deploy and clean up a CloudFormation stack", "Validate, deploy, inspect, and delete a stack from the CLI.", [
+  ["Validate template.yaml before deploying it.", [/aws\s+cloudformation\s+validate-template\s+--template-body\s+file:\/\/template\.yaml/], "aws cloudformation validate-template --template-body file://template.yaml",
+    "Parameters: []  Description: Web tier", "cloudformation validate-template --template-body file://template.yaml", "Validation catches syntax errors, not logic or permission errors."],
+  ["Create a stack named web-tier from that template.", [/aws\s+cloudformation\s+create-stack\s+.*--stack-name\s+web-tier\s+.*--template-body\s+file:\/\/template\.yaml/, /aws\s+cloudformation\s+create-stack\s+.*--template-body\s+file:\/\/template\.yaml\s+.*--stack-name\s+web-tier/], "aws cloudformation create-stack --stack-name web-tier --template-body file://template.yaml",
+    "StackId: arn:aws:cloudformation:us-east-1:111122223333:stack/web-tier/abc", "create-stack with --stack-name and --template-body.", "Infrastructure as code gives repeatable, reviewable environments."],
+  ["Show the stack's event history to follow progress or see why it failed.", [/aws\s+cloudformation\s+describe-stack-events\s+--stack-name\s+web-tier/], "aws cloudformation describe-stack-events --stack-name web-tier",
+    "CREATE_IN_PROGRESS ... CREATE_COMPLETE web-tier", "describe-stack-events --stack-name", "On a failed stack, the first CREATE_FAILED event holds the real reason."],
+  ["Delete the stack to stop all charges.", [/aws\s+cloudformation\s+delete-stack\s+--stack-name\s+web-tier/], "aws cloudformation delete-stack --stack-name web-tier",
+    "(no output). Resources with DeletionPolicy Retain stay behind.", "cloudformation delete-stack --stack-name", "Deleting the stack removes the resources it created, except ones marked Retain."]
+], "Validate, create, watch events, delete. Use change sets for updates and DeletionPolicy to protect data.");
+
+SIM("sm", "m4.2 m3.1", "term", "Stop paying for an idle SageMaker endpoint", "A forgotten real-time endpoint is costing money every hour.", [
+  ["List your SageMaker endpoints.", [/aws\s+sagemaker\s+list-endpoints/], "aws sagemaker list-endpoints",
+    "EndpointName: churn-prod  Status: InService\nEndpointName: churn-test  Status: InService", "sagemaker list-endpoints", "Real-time endpoints bill for every hour they exist, even with zero traffic."],
+  ["Describe the endpoint named churn-test to see its instance type.", [/aws\s+sagemaker\s+describe-endpoint\s+--endpoint-name\s+churn-test/], "aws sagemaker describe-endpoint --endpoint-name churn-test",
+    "InstanceType: ml.m5.xlarge  InstanceCount: 2  LastModified: 41 days ago", "sagemaker describe-endpoint --endpoint-name", "Two xlarge instances for a test endpoint nobody has called in weeks."],
+  ["Delete churn-test.", [/aws\s+sagemaker\s+delete-endpoint\s+--endpoint-name\s+churn-test/], "aws sagemaker delete-endpoint --endpoint-name churn-test",
+    "(no output: deleting)", "sagemaker delete-endpoint --endpoint-name", "For spiky or low traffic, serverless inference or async inference avoids paying for idle capacity."]
+], "Match the endpoint type to the traffic: real-time for steady, serverless for spiky, batch for offline.");
+
+FIX("iampol", "s1.1 o4.1", "Review an IAM policy", "A developer only needs to read report files from one bucket. This policy gives far more. Repair it.", [
+  ["{ \"Version\": \"2012-10-17\","],
+  ["\"Effect\": \"Allow\","],
+  ["\"Action\": \"*\",", ["\"Action\": \"s3:*\",", "\"Action\": [\"s3:GetObject\"],", "\"Action\": [\"s3:*\", \"iam:*\"],", "\"Action\": \"*\", \"Condition\": {}"], 1, "Wildcard actions grant everything. List only the specific API calls the job needs."],
+  ["\"Resource\": \"*\"", ["\"Resource\": \"arn:aws:s3:::*\"", "\"Resource\": \"arn:aws:s3:::reports-prod/*\"", "\"Resource\": \"*\" /* reviewed */", "\"Resource\": [\"*\", \"arn:aws:s3:::reports-prod\"]"], 1, "Scope Resource to the exact bucket and prefix, not every resource in the account."],
+  ["}"]
+], "Least privilege: specific actions, specific resources, and conditions where possible.");
+
+FIX("bktpol", "s1.3 o4.2", "Review an S3 bucket policy", "This bucket holds customer exports. Find what leaks access to the world.", [
+  ["\"Effect\": \"Allow\","],
+  ["\"Principal\": \"*\",", ["\"Principal\": \"*\", \"NotAction\": \"s3:Delete*\",", "\"Principal\": {\"AWS\": \"arn:aws:iam::111122223333:role/export-reader\"},", "\"Principal\": {\"AWS\": \"*\"},", "\"Principal\": \"anonymous\","], 1, "Principal * means anyone on the internet. Name the exact role or account instead."],
+  ["\"Action\": \"s3:*\",", ["\"Action\": \"s3:*\", \"Condition\": {\"Bool\": {\"aws:SecureTransport\": \"true\"}},", "\"Action\": [\"s3:GetObject\"],", "\"Action\": \"s3:Get*\", \"s3:Put*\",", "\"Action\": \"s3:*Object\","], 1, "Grant only the read action this role needs. Write and delete rights are a ransomware risk."],
+  ["\"Resource\": \"arn:aws:s3:::exports-prod/*\""]
+], "Bucket policies: never use Principal * unless the bucket is meant to be public, and add Block Public Access.");
+
+FIX("sgrules", "s1.2 o5.3", "Audit security group rules", "This web server's security group was opened wide for testing. Fix the dangerous rules.", [
+  ["Inbound  TCP 443   0.0.0.0/0     (HTTPS from anywhere)"],
+  ["Inbound  TCP 22    0.0.0.0/0     (SSH from anywhere)", ["Inbound  TCP 22    198.51.100.20/32  (SSH from the office IP only)", "Inbound  TCP 22    0.0.0.0/0     (SSH, rate limited)", "Inbound  TCP 2222  0.0.0.0/0     (SSH on another port)", "Inbound  UDP 22    0.0.0.0/0     (SSH over UDP)"], 0, "SSH open to the world is constantly scanned. Restrict to a known IP or use Session Manager."],
+  ["Inbound  TCP 3306  0.0.0.0/0     (MySQL from anywhere)", ["Inbound  TCP 3306  sg-0webapp   (MySQL from the app tier only)", "Inbound  TCP 3306  0.0.0.0/0     (MySQL, strong password)", "Inbound  TCP 3307  0.0.0.0/0     (MySQL, other port)", "Inbound  TCP 3306  10.0.0.0/8    (MySQL from any internal address)"], 0, "Databases belong in private subnets. Reference the app tier's security group instead of an IP range."],
+  ["Inbound  ALL      0.0.0.0/0     (All traffic)", ["Inbound  ALL      10.0.0.0/16   (All traffic, VPC only)", "Remove the rule", "Inbound  ALL      0.0.0.0/0     (All traffic, logged)", "Inbound  ICMP     0.0.0.0/0     (ping from anywhere)"], 1, "An all-traffic rule from anywhere cancels every other restriction. Delete it."]
+], "Security groups: smallest port set, smallest source set, and reference other security groups where you can.");
+
+FIX("cfnrds", "s1.3 o4.2", "Review a CloudFormation database", "This template creates a production database. Find the settings that put data at risk.", [
+  ["Type: AWS::RDS::DBInstance"],
+  ["StorageEncrypted: false", ["StorageEncrypted: false  # enable later", "StorageEncrypted: true", "StorageType: gp3", "BackupRetentionPeriod: 0"], 1, "Encrypt data at rest with KMS. It cannot be switched on later without restoring from a snapshot."],
+  ["PubliclyAccessible: true", ["PubliclyAccessible: false", "PubliclyAccessible: true  # SG restricted", "PubliclyAccessible: auto", "PubliclyAccessible: true  # temporary"], 0, "Production databases belong in private subnets with no public endpoint."],
+  ["MasterUserPassword: \"Passw0rd!\"", ["MasterUserPassword: \"Passw0rd!2026\"", "MasterUserPassword: \"{{resolve:secretsmanager:prod/db:SecretString:password}}\"", "MasterUserPassword: !Ref Param  # plain Parameter", "MasterUserPassword: \"changeme\""], 1, "Never hardcode credentials in templates. Pull them from Secrets Manager at deploy time."],
+  ["MultiAZ: false", ["MultiAZ: true", "MultiAZ: false  # Spot", "MultiAZ: maybe", "MultiAZ: false  # with backups"], 0, "Multi-AZ gives automatic failover to a standby in another Availability Zone."]
+], "Data stores: encrypt, keep private, never hardcode secrets, and run Multi-AZ for production.");
+
 </script>
 <script id="engine">
 // ===== ENGINE: reusable for any cert content pack =====
@@ -1834,6 +1957,7 @@ function renderHQ() {
 // ---------- TRAIN ----------
 let MODES; const modes = () => (MODES = [
   ["run", "Daily run", "Spaced repetition. Due reviews plus new terms. The core habit.", "Every day"],
+  ...HANDS_MODES(),
   ...((PACK.labs || []).length ? [["labs", "Hands-on labs", "Guided builds in your own AWS account, with checkpoints, cleanup lists, and a quiz.", `${(PACK.labs || []).filter(inPool).length} labs, ${(PACK.labs || []).filter(l => S.labs[l.id] && S.labs[l.id].done).length} done`]] : []),
   ["blitz", "60-second blitz", "Answer as many as you can before time runs out. Beat your best.", "Speed and recall"],
   ["match", "Match it", "Pair terms with meanings. Ports, attacks, agreements, and more.", `${PACK.matchSets.filter(inPool).length} sets`],
@@ -1863,6 +1987,7 @@ function renderTrain() {
   if (m === "drill") h = list(PACK.drills, "drill", x => "d:" + x.id, x => x.title, (x, k) => best(k));
   if (m === "labs") h = `<p class="lead" style="margin-top:0">Build it for real. Start with Lab 0 to protect your account, and always finish the cleanup list so nothing keeps billing.</p>` +
     list(PACK.labs, "lab", x => x.id, x => x.title, x => { const st = S.labs[x.id]; const n = x.steps.length + x.cleanup.length; const d = st ? (st.s || []).length + (st.c || []).length : 0; return (st && st.done ? "Complete. " : d ? d + " of " + n + " checked. " : "") + x.time + ". " + x.cost; });
+  if (["typeit", "sim", "fix"].includes(m)) h = HANDS_TRAIN(m, list, best);
   if (m === "exam") { VIEW = "exam"; SUB.train = null; return render(); }
   if (m === "run") { SUB.train = null; return startRun(); }
   const title = MODES.find(x => x[0] === m)[1];
@@ -1931,7 +2056,7 @@ function startRun(d) {
 }
 function renderAct() {
   const a = ACT;
-  ({ lab: renderLab, quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, drill: renderDrill, exam: renderExamRun, done: renderDone })[a.type]();
+  ({ ...HANDS_ACT, lab: renderLab, quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, drill: renderDrill, exam: renderExamRun, done: renderDone })[a.type]();
 }
 function head(i, n, label) { return `<div class="playhead"><button class="x" data-act="quit">Exit</button><div class="bar"><i style="width:${n ? (i / n) * 100 : 0}%"></i></div><span class="count">${label || i + " / " + n}</span></div>`; }
 function optsHtml(q, picked, act) {
@@ -2208,9 +2333,159 @@ function submitExam() {
     note: `<b style="font-family:var(--head);font-size:22px">Approximate scaled score: ${scaled} / 1,000</b> (${passAt} passes). This is a straight-line estimate; the real exam uses scaled scoring across different exam forms.<div style="margin-top:12px">${bars}</div>`, missed, again: "exam", againArg: [a.n, a.tr] });
 }
 
+// ---------- HANDS-ON: type it, practice simulator, fix it ----------
+const hnorm = s => String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+function hlev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let p = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; }
+  return p[n];
+}
+function hAlts(term) {
+  const alts = [term], m = term.match(/^(.*?)\s*\((.*?)\)\s*$/);
+  if (m) alts.push(m[1], m[2]);
+  term.split(/\s*[\/,]\s*/).forEach(p => alts.push(p));
+  return alts.filter(a => hnorm(a).length >= 2);
+}
+function hAccept(typed, term) {
+  const t = hnorm(typed); if (!t) return false;
+  return hAlts(term).some(a => { const n = hnorm(a); if (t === n) return true; const tol = n.length >= 12 ? 2 : n.length >= 6 ? 1 : 0; return tol > 0 && hlev(t, n) <= tol; });
+}
+function hMask(def, term) {
+  let out = def;
+  hAlts(term).sort((x, y) => y.length - x.length).forEach(a => { if (a.length >= 3) out = out.replace(new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), "_____"); });
+  return out;
+}
+const hfocus = () => setTimeout(() => { const el = document.querySelector(".tin"); if (el) el.focus(); }, 30);
+const hSims = () => PACK.sims || [], hFixes = () => PACK.fixes || [];
+function HANDS_MODES() {
+  const nc = CARDS.filter(inPool).length, ns = hSims().filter(inPool).length, nf = hFixes().filter(inPool).length;
+  return [
+    ["typeit", "Type it", "See a definition, type the term. No options to pick from, so recall has to come from you.", `${nc} terms`],
+    ...(ns ? [["sim", PACK.simLabel || "Guided practice", PACK.simDesc || "Do the task yourself, one step at a time, with instant feedback.", `${ns} activities`]] : []),
+    ...(nf ? [["fix", PACK.fixLabel || "Fix the flaw", PACK.fixDesc || "Find the broken line, then choose the right repair.", `${nf} exercises`]] : [])
+  ];
+}
+function HANDS_TRAIN(m, list, best) {
+  if (m === "typeit") return `<p class="lead" style="margin-top:0">Ten terms per round. Hints cost you the point, but a close spelling still counts.</p><div class="focus"><button data-act="typeit" data-k="weak">Weak and due first</button><button data-act="typeit" data-k="new">Unseen terms</button><button data-act="typeit" data-k="all">Random mix</button></div><p class="muted">${best("typeit")}</p>`;
+  if (m === "sim") return `<p class="lead" style="margin-top:0">${esc(PACK.simLead || "Type your answer for each step. Stuck? Use Hint. Your score counts steps you got right on the first try.")}</p>` + list(hSims(), "sim", x => "sim:" + x.id, x => x.title, (x, k) => best(k));
+  if (m === "fix") return `<p class="lead" style="margin-top:0">${esc(PACK.fixLead || "Tap the line you think is wrong, then pick the repair. Tapping a line that is fine costs you.")}</p>` + list(hFixes(), "fix", x => "fix:" + x.id, x => x.title, (x, k) => best(k));
+  return "";
+}
+
+// type it
+function startTypeIt(k) {
+  const pool = CARDS.filter(inPool); const seen = pool.filter(c => S.items[c.id]), fresh = pool.filter(c => !S.items[c.id]);
+  const t = today(); let list;
+  if (k === "new") list = shuffle(fresh).concat(shuffle(seen));
+  else if (k === "all") list = shuffle(pool);
+  else list = shuffle(seen).sort((a, b) => (S.items[a.id].d <= t ? 0 : 1) - (S.items[b.id].d <= t ? 0 : 1) || S.items[a.id].b - S.items[b.id].b).concat(shuffle(fresh));
+  list = list.slice(0, 10); if (!list.length) return toast("No terms available");
+  ACT = { type: "typeit", list, i: 0, res: null, tries: 0, hintN: 0, bad: false, ok: 0, missed: [], xp0: S.xp }; render();
+}
+function renderTypeIt() {
+  const a = ACT, c = a.list[a.i]; const hint = c.t.split("").map((ch, k) => k < a.hintN || !/[A-Za-z0-9]/.test(ch) ? ch : "_").join("");
+  let h = `<div class="play">${head(a.i, a.list.length)}<div class="qcard"><div class="row">${ichip(c)}<span class="chip">Type it</span></div><p class="ask">Which term is this?</p><p class="prompt">${esc(hMask(c.d, c.t))}</p>`;
+  if (a.res == null) {
+    h += `<form data-hform="typeit" autocomplete="off"><input class="tin" name="v" placeholder="Type the term" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="row" style="margin-top:12px"><button class="btn" type="submit">Check</button><button class="btn ghost" type="button" data-act="tihint">Hint</button><button class="btn ghost" type="button" data-act="tishow">Show answer</button></div></form>`;
+    if (a.bad) h += `<p class="hint">Not quite. Try again, or use a hint.</p>`;
+    if (a.hintN) h += `<p style="font-family:var(--mono);font-size:18px;letter-spacing:.08em">${esc(hint)}</p>`;
+  } else {
+    h += `<div class="feedback ${a.res === "ok" ? "" : "no"}"><h4>${a.res === "ok" ? "Yes: " : a.res === "shown" ? "The answer: " : "Counted as a miss: "}${esc(c.t)}</h4>${a.res === "late" ? `<p>You got it, but with hints or retries, so it comes back sooner.</p>` : ""}${c.m ? `<div class="hook"><b>Hook:</b> ${esc(c.m)}</div>` : ""}</div><div class="next"><button class="btn" data-act="tinext">${a.i + 1 >= a.list.length ? "Finish" : "Next term"}</button></div>`;
+  }
+  app().innerHTML = h + `</div></div>`; if (a.res == null) hfocus();
+}
+function tiSubmit(v) {
+  const a = ACT; if (a.type !== "typeit" || a.res != null || !String(v).trim()) return; const c = a.list[a.i];
+  if (hAccept(v, c.t)) { const clean = a.tries === 0 && a.hintN === 0; a.res = clean ? "ok" : "late"; if (clean) a.ok++; else a.missed.push(c); grade(c.id, clean); save(); render(); }
+  else { a.tries++; a.bad = true; if (a.tries >= 3 && !a.hintN) a.hintN = 1; render(); }
+}
+function tiNext() {
+  const a = ACT; a.i++;
+  if (a.i >= a.list.length) { const k = "typeit"; S.best[k] = Math.max(S.best[k] || 0, a.ok); return finish({ title: "Type it", score: a.ok, of: a.list.length, xp: S.xp - a.xp0, note: "Counts terms you typed with no hints and no retries. Typing from memory is harder than recognizing, which is why it sticks.", missed: a.missed, again: "typeit", againArg: "weak" }); }
+  a.res = null; a.tries = 0; a.hintN = 0; a.bad = false; window.scrollTo(0, 0); render();
+}
+
+// practice simulator (terminal or worked-problem skin)
+function startSim(i) { const s = hSims()[i]; ACT = { type: "sim", idx: i, s, step: 0, log: [], tries: 0, hinted: false, first: 0, xp0: S.xp }; render(); }
+function renderSim() {
+  const a = ACT, s = a.s, st = s.steps[a.step], sheet = s.skin === "sheet", pr = s.prompt || "analyst@redcell:~$";
+  const log = a.log.map(l => sheet
+    ? `<div class="tl"><span class="pr">${l.bad ? "Try again" : "Answer"}:</span> ${esc(l.cmd)}</div><pre class="to ${l.bad ? "bad" : ""}">${esc(l.out)}</pre>`
+    : `<div class="tl"><span class="pr">${esc(pr)}</span> ${esc(l.cmd)}</div><pre class="to ${l.bad ? "bad" : ""}">${esc(l.out)}</pre>`).join("");
+  app().innerHTML = `<div class="play" style="max-width:860px">${head(a.step, s.steps.length)}<div class="row">${ichip(s)}<span class="chip">${sheet ? "Worked problem" : "Terminal lab"}</span></div>
+    <h2 style="font-size:24px;margin:10px 0 4px">${esc(s.title)}</h2><p class="muted" style="margin-top:0">${esc(s.brief)}</p>
+    <div class="panel" style="border-left:5px solid var(--accent)"><b>Step ${a.step + 1} of ${s.steps.length}:</b> ${esc(st.ask)}</div>
+    <div class="tbox ${sheet ? "sheet" : ""}">${log || `<span class="muted">${sheet ? "Work through each step below." : "Type commands at the prompt. Type help for the goal."}</span>`}</div>
+    <form data-hform="sim" autocomplete="off"><div class="tprompt"><span class="pr">${sheet ? "Answer:" : esc(pr)}</span><input class="tin" name="v" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${sheet ? "Type your answer" : "Type a command"}"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" type="submit">${sheet ? "Check" : "Run"}</button><button class="btn ghost" type="button" data-act="simhint">Hint</button><button class="btn ghost" type="button" data-act="simshow">Show me</button></div></form>
+    ${a.hinted || a.tries >= 2 ? `<div class="hook" style="margin-top:12px"><b>Hint:</b> ${esc(st.hint)}</div>` : ""}</div>`;
+  hfocus(); const tb = document.querySelector(".tbox"); if (tb) tb.scrollTop = tb.scrollHeight;
+}
+function simAdvance(cmd, shown) {
+  const a = ACT, s = a.s, st = s.steps[a.step]; const first = a.tries === 0 && !a.hinted && !shown;
+  a.log.push({ cmd, out: st.out + (st.why ? "\n\n# " + st.why : "") }); if (first) a.first++;
+  objStat(s, first); addXP(first ? 8 : 3); touchDay(); a.step++; a.tries = 0; a.hinted = false;
+  if (a.step >= s.steps.length) { const k = "sim:" + s.id; S.best[k] = Math.max(S.best[k] || 0, a.first); return finish({ title: s.title, score: a.first, of: s.steps.length, xp: S.xp - a.xp0, note: "Score counts steps you got right on the first try, with no hint.", tip: s.tip, again: "sim", againArg: a.idx }); }
+  save(); render();
+}
+function simSubmit(v) {
+  const a = ACT; if (a.type !== "sim") return; v = String(v).trim().replace(/\s+/g, " "); if (!v) return;
+  const st = a.s.steps[a.step], sheet = a.s.skin === "sheet";
+  if (!sheet && /^(help|\?)$/i.test(v)) { a.log.push({ cmd: v, out: "Goal: " + st.ask + "\nUse Hint if you are stuck. Show me reveals the answer (no point)." }); return render(); }
+  const vv = v.replace(/^sudo\s+/i, "");
+  if (st.ok.some(r => new RegExp(r, "i").test(vv))) return simAdvance(v, false);
+  a.tries++; a.log.push({ cmd: v, bad: true, out: sheet ? "Not quite. Check your work and try again." : "That does not do what this step needs. Re-read the task, or use Hint." }); render();
+}
+function simShow() { const a = ACT; const st = a.s.steps[a.step]; simAdvance(st.ans, true); }
+
+// fix the flaw
+function startFix(i) { const f = hFixes()[i]; ACT = { type: "fix", idx: i, f, sel: null, fixed: {}, tried: {}, first: 0, fps: 0, msg: "", xp0: S.xp }; render(); }
+function fixBugs(f) { return f.lines.map((l, i) => l.length > 1 ? i : -1).filter(i => i >= 0); }
+function renderFix() {
+  const a = ACT, f = a.f, bugs = fixBugs(f), nFixed = Object.keys(a.fixed).length, all = nFixed === bugs.length;
+  let h = `<div class="play" style="max-width:980px">${head(nFixed, bugs.length, nFixed + " / " + bugs.length + " fixed")}<div class="row">${ichip(f)}<span class="chip">Fix the flaw</span></div><h2 style="font-size:24px;margin:10px 0 4px">${esc(f.title)}</h2><p class="muted" style="margin-top:0">${esc(f.brief)}</p><div class="logbox">`;
+  f.lines.forEach((l, i) => { const fx = a.fixed[i] != null; h += `<button class="logline ${fx ? "tp" : a.sel === i ? "flag" : a.fine === i ? "fp" : ""}" data-act="fixl" data-i="${i}" ${fx || all ? "disabled" : ""}>${esc(fx ? l[1][l[2]] : l[0])}</button>`; });
+  h += `</div>`;
+  if (a.msg) h += `<div class="feedback ${a.msgBad ? "no" : ""}" style="margin-top:12px"><p style="margin:0">${esc(a.msg)}</p></div>`;
+  if (a.sel != null && !all) { const l = f.lines[a.sel], t = a.tried[a.sel] || []; h += `<div class="panel" style="margin-top:12px"><b>How should this line be fixed?</b><div class="opts" style="margin-top:10px">` + l[1].map((o, k) => `<button class="opt ${t.includes(k) ? "wrong" : ""}" data-act="fixo" data-k="${k}" ${t.includes(k) ? "disabled" : ""}><span class="k">${k + 1}</span><span style="font-family:var(--mono);font-size:14px">${esc(o)}</span></button>`).join("") + `</div></div>`; }
+  if (all) h += `<div class="panel" style="margin-top:14px"><b>What was wrong</b>` + bugs.map(i => `<p class="why" style="margin-left:0"><b>Line ${i + 1}:</b> ${esc(f.lines[i][3])}</p>`).join("") + `</div><div class="next"><button class="btn" data-act="fixdone">Finish</button></div>`;
+  else h += `<p class="kbd">${a.fps} false alarm${a.fps === 1 ? "" : "s"}</p>`;
+  app().innerHTML = h + `</div>`;
+}
+function fixLine(i) {
+  const a = ACT, l = a.f.lines[i]; a.fine = null; a.msgBad = false;
+  if (l.length > 1) { a.sel = i; a.msg = ""; } else { a.fps++; a.sel = null; a.fine = i; a.msgBad = true; a.msg = "Line " + (i + 1) + " is fine as written. Keep looking."; }
+  render();
+}
+function fixOpt(k) {
+  const a = ACT, i = a.sel, l = a.f.lines[i]; if (i == null) return;
+  if (k === l[2]) { const first = !(a.tried[i] || []).length; if (first) a.first++; a.fixed[i] = k; a.sel = null; a.msgBad = false; a.msg = "Fixed. " + l[3]; objStat(a.f, first); addXP(first ? 12 : 4); touchDay(); save(); }
+  else { (a.tried[i] = a.tried[i] || []).push(k); a.msgBad = true; a.msg = "That does not close the hole. Think about what an attacker could still do."; }
+  render();
+}
+function fixDone() {
+  const a = ACT, bugs = fixBugs(a.f).length, sc = Math.max(0, a.first - a.fps); const k = "fix:" + a.f.id; S.best[k] = Math.max(S.best[k] || 0, sc);
+  finish({ title: a.f.title, score: sc, of: bugs, xp: S.xp - a.xp0, note: `${a.first} repaired on the first try, ${a.fps} false alarm${a.fps === 1 ? "" : "s"} (each one subtracts from your score).`, tip: a.f.tip, again: "fix", againArg: a.idx });
+}
+const HANDS_ACT = { typeit: renderTypeIt, sim: renderSim, fix: renderFix };
+const HANDS_AGAIN = { typeit: x => startTypeIt(x), sim: x => startSim(x), fix: x => startFix(x) };
+const HANDS_ACTIONS = {
+  typeit: d => startTypeIt(d.k), tihint: () => { ACT.hintN = Math.min(ACT.hintN + 1, ACT.list[ACT.i].t.length); render(); },
+  tishow: () => { const a = ACT, c = a.list[a.i]; a.res = "shown"; a.missed.push(c); grade(c.id, false); save(); render(); }, tinext: () => tiNext(),
+  sim: d => startSim(+d.i), simhint: () => { ACT.hinted = true; render(); }, simshow: () => simShow(),
+  fix: d => startFix(+d.i), fixl: d => fixLine(+d.i), fixo: d => fixOpt(+d.k), fixdone: () => fixDone()
+};
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-hform]"); if (!f) return; e.preventDefault();
+  const v = new FormData(f).get("v") || ""; if (f.dataset.hform === "typeit") tiSubmit(v); else if (f.dataset.hform === "sim") simSubmit(v);
+});
+
+
 // ---------- events ----------
-const AGAIN = { run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), drill: x => startDrill(x), lab: x => startLab(x), exam: x => startExam(x[0], x[1]) };
+const AGAIN = { ...HANDS_AGAIN, run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), drill: x => startDrill(x), lab: x => startLab(x), exam: x => startExam(x[0], x[1]) };
 const ACTIONS = {
+  ...HANDS_ACTIONS,
   nav: d => { ACT = null; VIEW = d.v; SUB.train = null; window.scrollTo(0, 0); render(); },
   welcomed: () => { S.welcomed = true; save(); render(); },
   dloffline: () => downloadOffline(),

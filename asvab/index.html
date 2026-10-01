@@ -367,6 +367,19 @@ body.tutoring{overflow:hidden}
 .seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--surface);box-shadow:inset 0 -4px 0 var(--accent)}
 @media (max-width:760px){.seg{margin-left:0}.seg button{max-width:none;flex:1 1 100%}}
 
+
+/* hands-on activities */
+.tin{width:100%;font:inherit;font-size:18px;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:9px;padding:12px 14px}
+.tin:focus{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--ink)}
+.tbox{background:#0F1A2A;color:#D8E2F0;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;max-height:46vh;overflow:auto;margin:12px 0}
+.tbox .tl{white-space:pre-wrap}.tbox .tl .pr{color:#4CC58A}
+.tbox pre{margin:2px 0 10px;white-space:pre-wrap;font:inherit;color:#B9C7DB}
+.tbox pre.bad{color:#F07A7A}
+.tbox.sheet{background:var(--sunk);color:var(--ink);font-family:var(--body);font-size:16px}
+.tbox.sheet .tl .pr{color:var(--ok);font-weight:700}.tbox.sheet pre{color:var(--muted);font-family:var(--body)}.tbox.sheet pre.bad{color:var(--bad)}
+.tprompt{display:flex;align-items:center;gap:10px}.tprompt .pr{font-family:var(--mono);color:var(--muted);white-space:nowrap;font-size:14px}
+.tprompt .tin{font-family:var(--mono);font-size:16px}
+
 </style>
 </head>
 <body>
@@ -1089,6 +1102,95 @@ PACK.lineFormulas = { GT: ["VE", "2.1"], CL: ["VE", "2.1", "2.2"], CO: ["2.1", "
 PACK.lineNames = { GT: "General Technical", CL: "Clerical", CO: "Combat", EL: "Electronics", FA: "Field Artillery", GM: "General Maintenance", MM: "Mechanical Maintenance", OF: "Operators and Food", SC: "Surveillance and Communications", ST: "Skilled Technical" };
 PACK.branches = [["Army", 31, 50], ["Navy", 31, 50], ["Marine Corps", 32, 50], ["Coast Guard", 32, 50], ["Air Force", 36, 65], ["Space Force", 36, 65]];
 
+
+// ===== HANDS-ON CONTENT =====
+PACK.sims = PACK.sims || []; PACK.fixes = PACK.fixes || [];
+PACK.simLabel = "Worked problems";
+PACK.simDesc = "Solve each problem one step at a time and type your own answer. Instant feedback, no multiple choice.";
+PACK.simLead = "Type your answer for each step. Stuck? Hint gives a nudge, Show me reveals the answer. Score counts steps you got right on the first try. No calculator, same as the real test.";
+PACK.fixLabel = "Find the mistake";
+PACK.fixDesc = "A worked solution has an error in it. Tap the wrong step and choose the correct version.";
+PACK.fixLead = "Tap the step with the error, then pick the correct version. Tapping a correct step costs you.";
+const N = p => new RegExp("^\\s*\\$?\\s*(" + p + ")\\s*[a-z%\\s/\\u00b2\\u00b0.]*$");
+function SIM(id, o, title, brief, steps, tip) { PACK.sims.push({ id, x: { asvab: o }, skin: "sheet", title, brief, tip, steps: steps.map(([ask, ok, ans, out, hint, why]) => ({ ask, ok: ok.map(r => r.source), ans, out, hint, why })) }); }
+function FIXSHUF(lines) { return lines.map(l => { if (l.length < 2) return l; const right = l[1][l[2]], o = l[1].slice(); for (let i = o.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [o[i], o[j]] = [o[j], o[i]]; } return [l[0], o, o.indexOf(right), l[3]]; }); }
+function FIX(id, o, title, brief, lines, tip) { PACK.fixes.push({ id, x: { asvab: o }, title, brief, lines: FIXSHUF(lines), tip }); }
+
+SIM("sale", "2.1", "Sale price with discount and tax", "A jacket costs $80. It is 25% off, and then 8% sales tax is added to the sale price. What do you pay?", [
+  ["Find the discount in dollars: 25% of $80.", [N("20(\\.00)?")], "20", "25% = 1/4, and 1/4 of 80 is 20.", "25% is the same as one quarter.", "Percent of a number: convert to a fraction or decimal and multiply."],
+  ["Find the sale price after the discount.", [N("60(\\.00)?")], "60", "80 - 20 = 60", "Subtract the discount from the original price.", "Tax applies to the sale price, not the original price."],
+  ["Find the tax: 8% of $60.", [N("4\\.8(0)?")], "4.80", "0.08 x 60 = 4.80", "10% of 60 is 6. Take away 2% (1.20).", "Shortcut: 10% moves the decimal one place."],
+  ["Find the total you pay.", [N("64\\.8(0)?")], "64.80", "60 + 4.80 = 64.80", "Add the tax to the sale price.", "Multi-step percent problems: do one operation at a time and keep the running total."]
+], "Discount first, then tax on the new price. One operation per line.");
+
+SIM("rates", "2.1", "Distance, rate, and time", "A convoy drives 180 miles in 3 hours at a steady speed.", [
+  ["Find the speed in miles per hour.", [N("60")], "60", "180 / 3 = 60 miles per hour.", "Speed = distance divided by time.", "Rate = distance / time."],
+  ["At that speed, how many miles in 5 hours?", [N("300")], "300", "60 x 5 = 300 miles.", "Distance = rate times time.", "Same formula, rearranged."],
+  ["How many hours to drive 450 miles at that speed? (use a decimal)", [N("7\\.5(0)?")], "7.5", "450 / 60 = 7.5 hours (7 hours 30 minutes).", "Time = distance divided by rate.", "Check: 60 x 7.5 = 450."]
+], "d = r x t. Cover the unknown with your finger to see the operation.");
+
+SIM("ratio", "2.1", "Ratios and parts", "A class of 40 students has boys to girls in the ratio 3 : 5.", [
+  ["How many total parts is the ratio?", [N("8")], "8", "3 + 5 = 8 parts.", "Add the two numbers in the ratio.", "A ratio splits a whole into equal-sized parts."],
+  ["How many students are in each part?", [N("5")], "5", "40 / 8 = 5 students per part.", "Divide the total by the number of parts.", "Find the value of one part first."],
+  ["How many boys are there?", [N("15")], "15", "3 parts x 5 = 15 boys.", "Boys are 3 parts.", "Girls: 5 x 5 = 25. Check: 15 + 25 = 40."]
+], "Ratio problems: add the parts, divide the total, then multiply.");
+
+SIM("fractions", "2.2", "Adding unlike fractions", "Add 3/4 + 5/6 and write the result.", [
+  ["What is the least common denominator of 4 and 6?", [N("12")], "12", "Multiples of 4: 4, 8, 12. Multiples of 6: 6, 12. First match is 12.", "Smallest number both 4 and 6 divide into.", "A common denominator lets you add the pieces."],
+  ["Rewrite 3/4 with denominator 12 (type the fraction).", [/^\s*9\s*\/\s*12\s*$/], "9/12", "3/4 = (3 x 3)/(4 x 3) = 9/12.", "Multiply top and bottom by 3.", "Whatever you do to the bottom, do to the top."],
+  ["Add 9/12 + 10/12 (type the fraction).", [/^\s*19\s*\/\s*12\s*$/], "19/12", "9 + 10 = 19, denominator stays 12.", "Add the numerators only.", "10/12 came from 5/6 times 2/2."],
+  ["Write 19/12 as a mixed number (like 1 3/12).", [/^\s*1\s*(and\s*)?7\s*\/\s*12\s*$/, /^\s*1\s*-\s*7\s*\/\s*12\s*$/], "1 7/12", "12 goes into 19 once with 7 left over: 1 7/12.", "How many whole 12s fit into 19?", "Check your final answer is in the form the question wants."]
+], "Find the common denominator, convert, add the tops, simplify.");
+
+SIM("solvex", "2.2", "Solve a two-step equation", "Solve 3x + 7 = 31.", [
+  ["Undo the +7. What does the equation become? (type like 3x = 5)", [/^\s*3\s*x\s*=\s*24\s*$/i], "3x = 24", "31 - 7 = 24, so 3x = 24.", "Subtract 7 from both sides.", "Inverse operations, applied to both sides, keep the equation balanced."],
+  ["Undo the multiplication by 3. What is x?", [/^\s*(x\s*=\s*)?8\s*$/i], "8", "24 / 3 = 8.", "Divide both sides by 3.", "Work backwards through the order of operations."],
+  ["Check by substituting x into 3x + 7. What do you get?", [N("31")], "31", "3(8) + 7 = 24 + 7 = 31, which matches.", "Replace x with your answer.", "Always substitute back. It catches careless errors in seconds."]
+], "Undo addition or subtraction first, then multiplication or division.");
+
+SIM("area", "2.2", "Area, perimeter, and cost", "A rectangular room is 12 feet by 15 feet. Flooring costs $2.50 per square foot.", [
+  ["Find the area in square feet.", [N("180")], "180", "12 x 15 = 180 square feet.", "Area of a rectangle = length times width.", "Area is in square units."],
+  ["Find the perimeter in feet (for baseboard).", [N("54")], "54", "2(12 + 15) = 54 feet.", "Add all four sides, or double length plus width.", "Perimeter is the distance around."],
+  ["Find the flooring cost.", [N("450")], "450", "180 x 2.50 = 450 dollars.", "Area times price per square foot.", "Cost problems: pick the measurement that matches the unit of the price."]
+], "Area = L x W (square units). Perimeter = 2(L + W) (plain units).");
+
+SIM("ohm", "3.2", "Ohm's law and power", "A circuit has a 12 volt battery and a 4 ohm resistor.", [
+  ["Find the current in amps. (I = V / R)", [N("3")], "3", "12 / 4 = 3 amps.", "Divide volts by ohms.", "Ohm's law: V = I x R."],
+  ["Find the power in watts. (P = V x I)", [N("36")], "36", "12 x 3 = 36 watts.", "Multiply volts by amps.", "Power is how fast energy is used."],
+  ["If the resistance doubles to 8 ohms, what is the new current in amps?", [N("1\\.5(0)?")], "1.5", "12 / 8 = 1.5 amps. More resistance, less current.", "Use I = V / R again with R = 8.", "Resistance and current move in opposite directions at a fixed voltage."]
+], "V = I x R. Cover the unknown with your finger. P = V x I.");
+
+SIM("pulley", "3.5", "Pulleys and mechanical advantage", "A pulley system has 4 rope segments supporting the load. You lift a 200 lb crate 3 feet.", [
+  ["What is the mechanical advantage?", [N("4")], "4", "Count the supporting rope segments: 4.", "It equals the number of supporting segments.", "Mechanical advantage multiplies your force."],
+  ["How many pounds of effort do you pull with (ignore friction)?", [N("50")], "50", "200 / 4 = 50 lb.", "Load divided by mechanical advantage.", "Less force is needed."],
+  ["How many feet of rope must you pull to raise the crate 3 feet?", [N("12")], "12", "3 x 4 = 12 feet.", "Distance goes up by the same factor that force goes down.", "You never get free work: less force means more distance."]
+], "Machines trade force for distance. Work = force x distance stays the same.");
+
+FIX("fix-dist", "2.2", "Find the error: distribute and solve", "Solve 2(x + 3) = 18. One step below is wrong.", [
+  ["2(x + 3) = 18"],
+  ["2x + 6 = 18"],
+  ["2x = 18 + 6", ["2x = 18 - 6", "2x = 18 + 6", "2x = 18 / 6", "2x = 18 x 6"], 0, "To undo +6 you subtract 6 from both sides, not add it."],
+  ["x = 12 / 2 = 6"]
+], "Undo addition with subtraction. Do the same thing to both sides.");
+
+FIX("fix-percent", "2.1", "Find the error: percent increase", "A price rose from $40 to $50. What is the percent increase? One step is wrong.", [
+  ["Change = 50 - 40 = 10"],
+  ["Percent change = 10 / 50 x 100", ["Percent change = 10 / 40 x 100", "Percent change = 10 / 50 x 100", "Percent change = 50 / 10 x 100", "Percent change = 10 x 40 / 100"], 0, "Percent change always divides by the ORIGINAL value (40), not the new one."],
+  ["= 25%"]
+], "Percent change = change / original x 100.");
+
+FIX("fix-units", "2.2", "Find the error: area in square yards", "A rug is 9 ft by 12 ft. Find its area in square yards. One step is wrong.", [
+  ["9 ft = 3 yd"],
+  ["12 ft = 4 yd"],
+  ["Area = 3 + 4 = 7 sq yd", ["Area = 3 x 4 = 12 sq yd", "Area = 3 + 4 = 7 sq yd", "Area = 3 x 4 = 12 yd", "Area = 2(3 + 4) = 14 sq yd"], 0, "Area multiplies length by width. Adding gives a distance, not an area. 3 x 4 = 12 sq yd."]
+], "Area = length x width. Convert units first, then multiply.");
+
+FIX("fix-series", "3.2", "Find the error: series circuit", "Three resistors of 2, 3, and 5 ohms are in SERIES on a 20 V supply. One step is wrong.", [
+  ["Series circuit: the same current flows through every resistor"],
+  ["R_total = 1 / (1/2 + 1/3 + 1/5)", ["R_total = 2 + 3 + 5 = 10 ohms", "R_total = 1 / (1/2 + 1/3 + 1/5)", "R_total = 2 x 3 x 5 = 30 ohms", "R_total = (2 + 3 + 5) / 3"], 0, "That formula is for PARALLEL resistors. In series, resistances simply add: 10 ohms."],
+  ["I = V / R = 20 / 10 = 2 A"]
+], "Series: add the resistances. Parallel: add the reciprocals.");
+
 </script>
 <script id="engine">
 // ===== ENGINE: reusable for any cert content pack =====
@@ -1406,7 +1508,7 @@ function renderPractice() {
   });
   h += `<h3 class="sect">Quick Math</h3><p class="muted" style="margin-top:-4px">Mental shortcuts for a test with no calculator.</p><div class="chips">${PACK.quick.map((q, i) => `<button class="chipbtn" data-act="quick" data-i="${i}">${esc(q.title)}${S.best["d:q:" + q.id] != null ? ` <span class="muted">${S.best["d:q:" + q.id]}/5</span>` : ""}</button>`).join("")}</div>`;
   modes();
-  const games = MODES.filter(m => ["match", "sort", "order", "blitz", "drill", "saved"].includes(m[0]));
+  const games = MODES.filter(m => ["typeit", "sim", "fix", "match", "sort", "order", "blitz", "drill", "saved"].includes(m[0]));
   h += `<h3 class="sect">Games and extras</h3><section class="card list">${games.map(([k, t, d, tag]) => `<button class="li" data-act="mode" data-m="${k}"><span class="lit"><b>${esc(t)}</b><span class="muted">${esc(tag)}</span></span><span class="chev">›</span></button>`).join("")}<button class="li" data-act="libgo"><span class="lit"><b>Study guide</b><span class="muted">Every term, formula, and memory hook</span></span><span class="chev">›</span></button></section>`;
   app().innerHTML = h;
 }
@@ -1622,6 +1724,7 @@ let MODES; const modes = () => (MODES = [
     ["sub", "Practice one subtest", "Pick a subtest and practice it: flashcards, exam-style questions, and fresh generated problems.", OBJ_KEYS[DT()].length + " subtests"]] : []),
   ...(Object.keys(S.saved).length ? [["saved", "Saved questions", "Review the questions you starred.", Object.keys(S.saved).length + " saved"]] : []),
   ["run", "Daily run", "Spaced repetition. Due reviews plus new terms. The core habit.", "Every day"],
+  ...HANDS_MODES(),
   ...((PACK.labs || []).length ? [["labs", "Hands-on labs", "Guided builds in your own AWS account, with checkpoints, cleanup lists, and a quiz.", `${(PACK.labs || []).filter(inPool).length} labs, ${(PACK.labs || []).filter(l => S.labs[l.id] && S.labs[l.id].done).length} done`]] : []),
   ["blitz", "60-second blitz", "Answer as many as you can before time runs out. Beat your best.", "Speed and recall"],
   ["match", "Match it", "Pair terms with meanings. Ports, attacks, agreements, and more.", `${PACK.matchSets.filter(inPool).length} sets`],
@@ -1654,6 +1757,7 @@ function renderTrain() {
   if (m === "drill") h = list(PACK.drills, "drill", x => "d:" + x.id, x => x.title, (x, k) => best(k));
   if (m === "labs") h = `<p class="lead" style="margin-top:0">Build it for real. Start with Lab 0 to protect your account, and always finish the cleanup list so nothing keeps billing.</p>` +
     list(PACK.labs, "lab", x => x.id, x => x.title, x => { const st = S.labs[x.id]; const n = x.steps.length + x.cleanup.length; const d = st ? (st.s || []).length + (st.c || []).length : 0; return (st && st.done ? "Complete. " : d ? d + " of " + n + " checked. " : "") + x.time + ". " + x.cost; });
+  if (["typeit", "sim", "fix"].includes(m)) h = HANDS_TRAIN(m, list, best);
   if (m === "exam") { VIEW = "exam"; SUB.train = null; return render(); }
   if (m === "run") { SUB.train = null; return startRun(); }
   const title = MODES.find(x => x[0] === m)[1];
@@ -1770,7 +1874,7 @@ function startRun(d) {
 }
 function renderAct() {
   const a = ACT;
-  ({ cat: renderCat, lab: renderLab, quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, drill: renderDrill, exam: renderExamRun, done: renderDone })[a.type]();
+  ({ ...HANDS_ACT, cat: renderCat, lab: renderLab, quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, drill: renderDrill, exam: renderExamRun, done: renderDone })[a.type]();
 }
 function head(i, n, label) { return `<div class="playhead"><button class="x" data-act="quit">Exit</button><div class="bar"><i style="width:${n ? (i / n) * 100 : 0}%"></i></div><span class="count">${label || i + " / " + n}</span></div>`; }
 function optsHtml(q, picked, act) {
@@ -2139,9 +2243,159 @@ function submitExam() {
     note: `<b style="font-family:var(--head);font-size:22px">Approximate scaled score: ${scaled} / 1,000</b> (${passAt} passes). This is a straight-line estimate; the real exam uses scaled scoring across different exam forms.<div style="margin-top:12px">${bars}</div>`, missed, again: "exam", againArg: [a.n, a.tr] });
 }
 
+// ---------- HANDS-ON: type it, practice simulator, fix it ----------
+const hnorm = s => String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+function hlev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let p = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; }
+  return p[n];
+}
+function hAlts(term) {
+  const alts = [term], m = term.match(/^(.*?)\s*\((.*?)\)\s*$/);
+  if (m) alts.push(m[1], m[2]);
+  term.split(/\s*[\/,]\s*/).forEach(p => alts.push(p));
+  return alts.filter(a => hnorm(a).length >= 2);
+}
+function hAccept(typed, term) {
+  const t = hnorm(typed); if (!t) return false;
+  return hAlts(term).some(a => { const n = hnorm(a); if (t === n) return true; const tol = n.length >= 12 ? 2 : n.length >= 6 ? 1 : 0; return tol > 0 && hlev(t, n) <= tol; });
+}
+function hMask(def, term) {
+  let out = def;
+  hAlts(term).sort((x, y) => y.length - x.length).forEach(a => { if (a.length >= 3) out = out.replace(new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), "_____"); });
+  return out;
+}
+const hfocus = () => setTimeout(() => { const el = document.querySelector(".tin"); if (el) el.focus(); }, 30);
+const hSims = () => PACK.sims || [], hFixes = () => PACK.fixes || [];
+function HANDS_MODES() {
+  const nc = CARDS.filter(inPool).length, ns = hSims().filter(inPool).length, nf = hFixes().filter(inPool).length;
+  return [
+    ["typeit", "Type it", "See a definition, type the term. No options to pick from, so recall has to come from you.", `${nc} terms`],
+    ...(ns ? [["sim", PACK.simLabel || "Guided practice", PACK.simDesc || "Do the task yourself, one step at a time, with instant feedback.", `${ns} activities`]] : []),
+    ...(nf ? [["fix", PACK.fixLabel || "Fix the flaw", PACK.fixDesc || "Find the broken line, then choose the right repair.", `${nf} exercises`]] : [])
+  ];
+}
+function HANDS_TRAIN(m, list, best) {
+  if (m === "typeit") return `<p class="lead" style="margin-top:0">Ten terms per round. Hints cost you the point, but a close spelling still counts.</p><div class="focus"><button data-act="typeit" data-k="weak">Weak and due first</button><button data-act="typeit" data-k="new">Unseen terms</button><button data-act="typeit" data-k="all">Random mix</button></div><p class="muted">${best("typeit")}</p>`;
+  if (m === "sim") return `<p class="lead" style="margin-top:0">${esc(PACK.simLead || "Type your answer for each step. Stuck? Use Hint. Your score counts steps you got right on the first try.")}</p>` + list(hSims(), "sim", x => "sim:" + x.id, x => x.title, (x, k) => best(k));
+  if (m === "fix") return `<p class="lead" style="margin-top:0">${esc(PACK.fixLead || "Tap the line you think is wrong, then pick the repair. Tapping a line that is fine costs you.")}</p>` + list(hFixes(), "fix", x => "fix:" + x.id, x => x.title, (x, k) => best(k));
+  return "";
+}
+
+// type it
+function startTypeIt(k) {
+  const pool = CARDS.filter(inPool); const seen = pool.filter(c => S.items[c.id]), fresh = pool.filter(c => !S.items[c.id]);
+  const t = today(); let list;
+  if (k === "new") list = shuffle(fresh).concat(shuffle(seen));
+  else if (k === "all") list = shuffle(pool);
+  else list = shuffle(seen).sort((a, b) => (S.items[a.id].d <= t ? 0 : 1) - (S.items[b.id].d <= t ? 0 : 1) || S.items[a.id].b - S.items[b.id].b).concat(shuffle(fresh));
+  list = list.slice(0, 10); if (!list.length) return toast("No terms available");
+  ACT = { type: "typeit", list, i: 0, res: null, tries: 0, hintN: 0, bad: false, ok: 0, missed: [], xp0: S.xp }; render();
+}
+function renderTypeIt() {
+  const a = ACT, c = a.list[a.i]; const hint = c.t.split("").map((ch, k) => k < a.hintN || !/[A-Za-z0-9]/.test(ch) ? ch : "_").join("");
+  let h = `<div class="play">${head(a.i, a.list.length)}<div class="qcard"><div class="row">${ichip(c)}<span class="chip">Type it</span></div><p class="ask">Which term is this?</p><p class="prompt">${esc(hMask(c.d, c.t))}</p>`;
+  if (a.res == null) {
+    h += `<form data-hform="typeit" autocomplete="off"><input class="tin" name="v" placeholder="Type the term" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="row" style="margin-top:12px"><button class="btn" type="submit">Check</button><button class="btn ghost" type="button" data-act="tihint">Hint</button><button class="btn ghost" type="button" data-act="tishow">Show answer</button></div></form>`;
+    if (a.bad) h += `<p class="hint">Not quite. Try again, or use a hint.</p>`;
+    if (a.hintN) h += `<p style="font-family:var(--mono);font-size:18px;letter-spacing:.08em">${esc(hint)}</p>`;
+  } else {
+    h += `<div class="feedback ${a.res === "ok" ? "" : "no"}"><h4>${a.res === "ok" ? "Yes: " : a.res === "shown" ? "The answer: " : "Counted as a miss: "}${esc(c.t)}</h4>${a.res === "late" ? `<p>You got it, but with hints or retries, so it comes back sooner.</p>` : ""}${c.m ? `<div class="hook"><b>Hook:</b> ${esc(c.m)}</div>` : ""}</div><div class="next"><button class="btn" data-act="tinext">${a.i + 1 >= a.list.length ? "Finish" : "Next term"}</button></div>`;
+  }
+  app().innerHTML = h + `</div></div>`; if (a.res == null) hfocus();
+}
+function tiSubmit(v) {
+  const a = ACT; if (a.type !== "typeit" || a.res != null || !String(v).trim()) return; const c = a.list[a.i];
+  if (hAccept(v, c.t)) { const clean = a.tries === 0 && a.hintN === 0; a.res = clean ? "ok" : "late"; if (clean) a.ok++; else a.missed.push(c); grade(c.id, clean); save(); render(); }
+  else { a.tries++; a.bad = true; if (a.tries >= 3 && !a.hintN) a.hintN = 1; render(); }
+}
+function tiNext() {
+  const a = ACT; a.i++;
+  if (a.i >= a.list.length) { const k = "typeit"; S.best[k] = Math.max(S.best[k] || 0, a.ok); return finish({ title: "Type it", score: a.ok, of: a.list.length, xp: S.xp - a.xp0, note: "Counts terms you typed with no hints and no retries. Typing from memory is harder than recognizing, which is why it sticks.", missed: a.missed, again: "typeit", againArg: "weak" }); }
+  a.res = null; a.tries = 0; a.hintN = 0; a.bad = false; window.scrollTo(0, 0); render();
+}
+
+// practice simulator (terminal or worked-problem skin)
+function startSim(i) { const s = hSims()[i]; ACT = { type: "sim", idx: i, s, step: 0, log: [], tries: 0, hinted: false, first: 0, xp0: S.xp }; render(); }
+function renderSim() {
+  const a = ACT, s = a.s, st = s.steps[a.step], sheet = s.skin === "sheet", pr = s.prompt || "analyst@redcell:~$";
+  const log = a.log.map(l => sheet
+    ? `<div class="tl"><span class="pr">${l.bad ? "Try again" : "Answer"}:</span> ${esc(l.cmd)}</div><pre class="to ${l.bad ? "bad" : ""}">${esc(l.out)}</pre>`
+    : `<div class="tl"><span class="pr">${esc(pr)}</span> ${esc(l.cmd)}</div><pre class="to ${l.bad ? "bad" : ""}">${esc(l.out)}</pre>`).join("");
+  app().innerHTML = `<div class="play" style="max-width:860px">${head(a.step, s.steps.length)}<div class="row">${ichip(s)}<span class="chip">${sheet ? "Worked problem" : "Terminal lab"}</span></div>
+    <h2 style="font-size:24px;margin:10px 0 4px">${esc(s.title)}</h2><p class="muted" style="margin-top:0">${esc(s.brief)}</p>
+    <div class="panel" style="border-left:5px solid var(--accent)"><b>Step ${a.step + 1} of ${s.steps.length}:</b> ${esc(st.ask)}</div>
+    <div class="tbox ${sheet ? "sheet" : ""}">${log || `<span class="muted">${sheet ? "Work through each step below." : "Type commands at the prompt. Type help for the goal."}</span>`}</div>
+    <form data-hform="sim" autocomplete="off"><div class="tprompt"><span class="pr">${sheet ? "Answer:" : esc(pr)}</span><input class="tin" name="v" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${sheet ? "Type your answer" : "Type a command"}"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" type="submit">${sheet ? "Check" : "Run"}</button><button class="btn ghost" type="button" data-act="simhint">Hint</button><button class="btn ghost" type="button" data-act="simshow">Show me</button></div></form>
+    ${a.hinted || a.tries >= 2 ? `<div class="hook" style="margin-top:12px"><b>Hint:</b> ${esc(st.hint)}</div>` : ""}</div>`;
+  hfocus(); const tb = document.querySelector(".tbox"); if (tb) tb.scrollTop = tb.scrollHeight;
+}
+function simAdvance(cmd, shown) {
+  const a = ACT, s = a.s, st = s.steps[a.step]; const first = a.tries === 0 && !a.hinted && !shown;
+  a.log.push({ cmd, out: st.out + (st.why ? "\n\n# " + st.why : "") }); if (first) a.first++;
+  objStat(s, first); addXP(first ? 8 : 3); touchDay(); a.step++; a.tries = 0; a.hinted = false;
+  if (a.step >= s.steps.length) { const k = "sim:" + s.id; S.best[k] = Math.max(S.best[k] || 0, a.first); return finish({ title: s.title, score: a.first, of: s.steps.length, xp: S.xp - a.xp0, note: "Score counts steps you got right on the first try, with no hint.", tip: s.tip, again: "sim", againArg: a.idx }); }
+  save(); render();
+}
+function simSubmit(v) {
+  const a = ACT; if (a.type !== "sim") return; v = String(v).trim().replace(/\s+/g, " "); if (!v) return;
+  const st = a.s.steps[a.step], sheet = a.s.skin === "sheet";
+  if (!sheet && /^(help|\?)$/i.test(v)) { a.log.push({ cmd: v, out: "Goal: " + st.ask + "\nUse Hint if you are stuck. Show me reveals the answer (no point)." }); return render(); }
+  const vv = v.replace(/^sudo\s+/i, "");
+  if (st.ok.some(r => new RegExp(r, "i").test(vv))) return simAdvance(v, false);
+  a.tries++; a.log.push({ cmd: v, bad: true, out: sheet ? "Not quite. Check your work and try again." : "That does not do what this step needs. Re-read the task, or use Hint." }); render();
+}
+function simShow() { const a = ACT; const st = a.s.steps[a.step]; simAdvance(st.ans, true); }
+
+// fix the flaw
+function startFix(i) { const f = hFixes()[i]; ACT = { type: "fix", idx: i, f, sel: null, fixed: {}, tried: {}, first: 0, fps: 0, msg: "", xp0: S.xp }; render(); }
+function fixBugs(f) { return f.lines.map((l, i) => l.length > 1 ? i : -1).filter(i => i >= 0); }
+function renderFix() {
+  const a = ACT, f = a.f, bugs = fixBugs(f), nFixed = Object.keys(a.fixed).length, all = nFixed === bugs.length;
+  let h = `<div class="play" style="max-width:980px">${head(nFixed, bugs.length, nFixed + " / " + bugs.length + " fixed")}<div class="row">${ichip(f)}<span class="chip">Fix the flaw</span></div><h2 style="font-size:24px;margin:10px 0 4px">${esc(f.title)}</h2><p class="muted" style="margin-top:0">${esc(f.brief)}</p><div class="logbox">`;
+  f.lines.forEach((l, i) => { const fx = a.fixed[i] != null; h += `<button class="logline ${fx ? "tp" : a.sel === i ? "flag" : a.fine === i ? "fp" : ""}" data-act="fixl" data-i="${i}" ${fx || all ? "disabled" : ""}>${esc(fx ? l[1][l[2]] : l[0])}</button>`; });
+  h += `</div>`;
+  if (a.msg) h += `<div class="feedback ${a.msgBad ? "no" : ""}" style="margin-top:12px"><p style="margin:0">${esc(a.msg)}</p></div>`;
+  if (a.sel != null && !all) { const l = f.lines[a.sel], t = a.tried[a.sel] || []; h += `<div class="panel" style="margin-top:12px"><b>How should this line be fixed?</b><div class="opts" style="margin-top:10px">` + l[1].map((o, k) => `<button class="opt ${t.includes(k) ? "wrong" : ""}" data-act="fixo" data-k="${k}" ${t.includes(k) ? "disabled" : ""}><span class="k">${k + 1}</span><span style="font-family:var(--mono);font-size:14px">${esc(o)}</span></button>`).join("") + `</div></div>`; }
+  if (all) h += `<div class="panel" style="margin-top:14px"><b>What was wrong</b>` + bugs.map(i => `<p class="why" style="margin-left:0"><b>Line ${i + 1}:</b> ${esc(f.lines[i][3])}</p>`).join("") + `</div><div class="next"><button class="btn" data-act="fixdone">Finish</button></div>`;
+  else h += `<p class="kbd">${a.fps} false alarm${a.fps === 1 ? "" : "s"}</p>`;
+  app().innerHTML = h + `</div>`;
+}
+function fixLine(i) {
+  const a = ACT, l = a.f.lines[i]; a.fine = null; a.msgBad = false;
+  if (l.length > 1) { a.sel = i; a.msg = ""; } else { a.fps++; a.sel = null; a.fine = i; a.msgBad = true; a.msg = "Line " + (i + 1) + " is fine as written. Keep looking."; }
+  render();
+}
+function fixOpt(k) {
+  const a = ACT, i = a.sel, l = a.f.lines[i]; if (i == null) return;
+  if (k === l[2]) { const first = !(a.tried[i] || []).length; if (first) a.first++; a.fixed[i] = k; a.sel = null; a.msgBad = false; a.msg = "Fixed. " + l[3]; objStat(a.f, first); addXP(first ? 12 : 4); touchDay(); save(); }
+  else { (a.tried[i] = a.tried[i] || []).push(k); a.msgBad = true; a.msg = "That does not close the hole. Think about what an attacker could still do."; }
+  render();
+}
+function fixDone() {
+  const a = ACT, bugs = fixBugs(a.f).length, sc = Math.max(0, a.first - a.fps); const k = "fix:" + a.f.id; S.best[k] = Math.max(S.best[k] || 0, sc);
+  finish({ title: a.f.title, score: sc, of: bugs, xp: S.xp - a.xp0, note: `${a.first} repaired on the first try, ${a.fps} false alarm${a.fps === 1 ? "" : "s"} (each one subtracts from your score).`, tip: a.f.tip, again: "fix", againArg: a.idx });
+}
+const HANDS_ACT = { typeit: renderTypeIt, sim: renderSim, fix: renderFix };
+const HANDS_AGAIN = { typeit: x => startTypeIt(x), sim: x => startSim(x), fix: x => startFix(x) };
+const HANDS_ACTIONS = {
+  typeit: d => startTypeIt(d.k), tihint: () => { ACT.hintN = Math.min(ACT.hintN + 1, ACT.list[ACT.i].t.length); render(); },
+  tishow: () => { const a = ACT, c = a.list[a.i]; a.res = "shown"; a.missed.push(c); grade(c.id, false); save(); render(); }, tinext: () => tiNext(),
+  sim: d => startSim(+d.i), simhint: () => { ACT.hinted = true; render(); }, simshow: () => simShow(),
+  fix: d => startFix(+d.i), fixl: d => fixLine(+d.i), fixo: d => fixOpt(+d.k), fixdone: () => fixDone()
+};
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-hform]"); if (!f) return; e.preventDefault();
+  const v = new FormData(f).get("v") || ""; if (f.dataset.hform === "typeit") tiSubmit(v); else if (f.dataset.hform === "sim") simSubmit(v);
+});
+
+
 // ---------- events ----------
-const AGAIN = { run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), drill: x => startDrill(x), quick: x => startQuick(x), fam: x => startFam(x[0], x[1]), lab: x => startLab(x), daily: () => startDaily(), sub: x => startSub(x), cat: x => startCat(x), exam: x => startExam(x[0], x[1]) };
+const AGAIN = { ...HANDS_AGAIN, run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), drill: x => startDrill(x), quick: x => startQuick(x), fam: x => startFam(x[0], x[1]), lab: x => startLab(x), daily: () => startDaily(), sub: x => startSub(x), cat: x => startCat(x), exam: x => startExam(x[0], x[1]) };
 const ACTIONS = {
+  ...HANDS_ACTIONS,
   nav: d => { ACT = null; VIEW = d.v; SUB.train = null; SUB.subj = null; SUB.quick = null; window.scrollTo(0, 0); render(); },
   welcomed: () => { S.welcomed = true; save(); render(); },
   dloffline: () => downloadOffline(),

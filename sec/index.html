@@ -255,6 +255,19 @@ p.lead{font-size:18px;max-width:62ch}
 .seg button[aria-checked="true"]{border-color:var(--ink);background:var(--surface);box-shadow:inset 0 -4px 0 var(--accent)}
 @media (max-width:760px){.seg{margin-left:0}.seg button{max-width:none;flex:1 1 100%}}
 
+
+/* hands-on activities */
+.tin{width:100%;font:inherit;font-size:18px;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:9px;padding:12px 14px}
+.tin:focus{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--ink)}
+.tbox{background:#0F1A2A;color:#D8E2F0;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;max-height:46vh;overflow:auto;margin:12px 0}
+.tbox .tl{white-space:pre-wrap}.tbox .tl .pr{color:#4CC58A}
+.tbox pre{margin:2px 0 10px;white-space:pre-wrap;font:inherit;color:#B9C7DB}
+.tbox pre.bad{color:#F07A7A}
+.tbox.sheet{background:var(--sunk);color:var(--ink);font-family:var(--body);font-size:16px}
+.tbox.sheet .tl .pr{color:var(--ok);font-weight:700}.tbox.sheet pre{color:var(--muted);font-family:var(--body)}.tbox.sheet pre.bad{color:var(--bad)}
+.tprompt{display:flex;align-items:center;gap:10px}.tprompt .pr{font-family:var(--mono);color:var(--muted);white-space:nowrap;font-size:14px}
+.tprompt .tin{font-family:var(--mono);font-size:16px}
+
 </style>
 </head>
 <body>
@@ -1740,6 +1753,89 @@ PACK.logs.push({ id: "ailog", o: null, o8: "2.6", title: "AI assistant audit log
   ["09:10 user=cust3310 prompt='What is your return policy?'", false, "Normal question."]
 ] });
 
+
+// ===== HANDS-ON CONTENT =====
+PACK.sims = PACK.sims || []; PACK.fixes = PACK.fixes || [];
+PACK.simLabel = "Terminal labs";
+PACK.simDesc = "Type the real commands. Find the problem, fix it, and confirm. No multiple choice.";
+PACK.simLead = "Type each command yourself. Stuck? Hint gives a nudge, Show me reveals the answer. Score counts steps you nailed on the first try.";
+PACK.fixDesc = "Spot the insecure line in a real config or code snippet, then pick the repair.";
+function SIM(id, o, o8, skin, title, brief, steps, tip) { PACK.sims.push({ id, o, o8, skin, title, brief, tip, prompt: "analyst@soc:~$", steps: steps.map(([ask, ok, ans, out, hint, why]) => ({ ask, ok: ok.map(r => r.source), ans, out, hint, why })) }); }
+function FIXSHUF(lines) { return lines.map(l => { if (l.length < 2) return l; const right = l[1][l[2]], o = l[1].slice(); for (let i = o.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [o[i], o[j]] = [o[j], o[i]]; } return [l[0], o, o.indexOf(right), l[3]]; }); }
+function FIX(id, o, o8, title, brief, lines, tip) { PACK.fixes.push({ id, o, o8, title, brief, lines: FIXSHUF(lines), tip }); }
+
+SIM("listen", "4.1", "4.1", "term", "Close an unneeded open port", "A server audit says something insecure is listening. Find it and shut it down.", [
+  ["List every listening TCP and UDP socket with the owning process.", [/^(ss|netstat)\s+(-[a-z]*t[a-z]*u[a-z]*|-[a-z]*u[a-z]*t[a-z]*)[a-z]*(\s+-[a-z]+)*$/, /^(ss|netstat)\s+-[a-z]*l[a-z]*/], "ss -tulpn",
+    "Netid State  Local Address:Port  Process\ntcp   LISTEN 0.0.0.0:22        users:((\"sshd\",pid=811))\ntcp   LISTEN 0.0.0.0:23        users:((\"telnetd\",pid=1042))\ntcp   LISTEN 0.0.0.0:443       users:((\"nginx\",pid=977))",
+    "ss with flags for tcp, udp, listening, process, numeric: -tulpn.", "Every listening port is attack surface. You inventory first, then remove what has no business need."],
+  ["Telnet (port 23) sends passwords in clear text. Stop the telnet service and keep it from starting at boot, in one command.", [/systemctl\s+disable\s+--now\s+telnet/, /systemctl\s+disable\s+--now\s+inetd/], "systemctl disable --now telnet.socket",
+    "Removed /etc/systemd/system/sockets.target.wants/telnet.socket.\nStopped telnet.socket.", "systemctl disable with the --now flag stops it and prevents boot start.", "Disabling an unneeded service is hardening: fewer services means fewer ways in. Replace telnet with SSH."],
+  ["Confirm that port 23 is no longer listening by filtering the socket list for it.", [/(ss|netstat)\s.*\|\s*grep\s+.*23/, /(ss|netstat)\s.*sport\s*=?\s*:?23/], "ss -tulpn | grep 23",
+    "(no output: nothing is listening on port 23)", "Run the same listing again and pipe it to grep for 23.", "Always verify a fix. No output from grep means the port is closed."]
+], "Inventory, disable, verify. That is the hardening loop for any service.");
+
+SIM("authlog", "4.9", "4.8", "term", "Hunt a brute-force attack in auth.log", "The SSH log looks noisy. Find who is guessing passwords and block them.", [
+  ["Show only the failed password lines in /var/log/auth.log.", [/grep\s+.*["']?failed password["']?.*auth\.log/, /cat\s+.*auth\.log\s*\|\s*grep\s+.*failed/], 'grep "Failed password" /var/log/auth.log',
+    "Sep 22 03:14:01 sshd[2210]: Failed password for root from 203.0.113.50 port 51122\nSep 22 03:14:03 sshd[2212]: Failed password for root from 203.0.113.50 port 51140\nSep 22 03:14:05 sshd[2214]: Failed password for admin from 203.0.113.50 port 51167\n... 412 more lines", "grep, the phrase Failed password in quotes, then the file path.", "Authentication logs are a primary data source for investigations."],
+  ["Count the attempts per source IP. Pipe sorted addresses into uniq -c.", [/sort.*\|\s*uniq\s+-c/, /uniq\s+-c/], "grep \"Failed password\" /var/log/auth.log | awk '{print $11}' | sort | uniq -c",
+    "    412 203.0.113.50\n      3 198.51.100.7\n      1 10.0.0.15", "After extracting the IP column, you need sort and then uniq -c.", "One address with hundreds of failures in minutes is a brute-force pattern, not a forgotten password."],
+  ["Block 203.0.113.50 with a firewall rule (iptables or ufw).", [/iptables\s+.*-s\s+203\.0\.113\.50.*-j\s+(drop|reject)/, /ufw\s+(deny|reject)\s+(from\s+)?203\.0\.113\.50/], "ufw deny from 203.0.113.50",
+    "Rule added", "Either ufw deny from <ip> or an iptables INPUT rule with -s and -j DROP.", "Containment: block the source. Long term, use key-only SSH and rate limiting such as fail2ban."]
+], "Failed logins by source IP: a spike from one address is the classic brute-force indicator.");
+
+SIM("hashcheck", "1.4", "1.3", "term", "Verify a download with a hash", "You downloaded an installer. Prove it was not tampered with.", [
+  ["Compute the SHA-256 hash of installer.iso.", [/sha256sum\s+installer\.iso/, /openssl\s+dgst\s+-sha256\s+installer\.iso/, /shasum\s+-a\s*256\s+installer\.iso/], "sha256sum installer.iso",
+    "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08  installer.iso", "sha256sum followed by the filename.", "A hash is a fingerprint. Change one bit of the file and the hash changes completely."],
+  ["The vendor published the hash in SHA256SUMS. Verify the file against that list automatically.", [/sha256sum\s+(-c|--check)\s+sha256sums/], "sha256sum -c SHA256SUMS",
+    "installer.iso: OK", "sha256sum with -c and the checksum file.", "OK means integrity is confirmed. Hashes prove integrity, not who sent the file; signatures do that."],
+  ["Check when a server certificate expires: print only the dates from server.crt.", [/openssl\s+x509\s+(-in\s+server\.crt\s+)?(-noout\s+)?(-in\s+server\.crt\s+)?-?-?dates?/, /openssl\s+x509\s+.*-dates/], "openssl x509 -in server.crt -noout -dates",
+    "notBefore=Jan  4 00:00:00 2026 GMT\nnotAfter=Jan  4 00:00:00 2027 GMT", "openssl x509, the input file, -noout, and -dates.", "Expired certificates cause outages and training users to click through warnings. Monitor expiry dates."]
+], "Integrity = hash. Authenticity = digital signature. Confidentiality = encryption.");
+
+SIM("perms", "4.6", "4.5", "term", "Fix risky file permissions", "A private key and a config file are readable by everyone. Apply least privilege.", [
+  ["List /home/svc/.ssh in long format to see permissions.", [/ls\s+-[a-z]*l[a-z]*\s+.*\.ssh/], "ls -l /home/svc/.ssh",
+    "-rwxrwxrwx 1 svc svc 1675 Sep 20 id_rsa\n-rw-r--r-- 1 svc svc  398 Sep 20 id_rsa.pub", "ls -l with the directory path.", "rwxrwxrwx means anyone on the system can read, change, and run the private key."],
+  ["Set id_rsa so only the owner can read and write it (octal mode).", [/chmod\s+(0?600|u=rw,go=)\s+.*id_rsa$/, /chmod\s+0?400\s+.*id_rsa$/], "chmod 600 /home/svc/.ssh/id_rsa",
+    "(no output)", "chmod with 600: owner read+write, nobody else.", "Private keys must be 600 or 400. SSH will even refuse a key that is too open."],
+  ["Make svc the owner and group of that key file.", [/chown\s+svc(:svc)?\s+.*id_rsa/], "chown svc:svc /home/svc/.ssh/id_rsa",
+    "(no output)", "chown user:group path.", "Least privilege applies to ownership as well as permission bits."]
+], "Permissions 600 = rw owner only. 644 = world-readable. 755 = world-executable.");
+
+SIM("nmap", "4.3", "4.3", "term", "Scan a host for open ports and versions", "You have written permission to test 10.0.0.5. Discover what it exposes.", [
+  ["Run a service version scan against 10.0.0.5 with nmap.", [/nmap\s+.*-s[a-z]*v[a-z]*\s+.*10\.0\.0\.5/, /nmap\s+.*10\.0\.0\.5.*-s[a-z]*v/], "nmap -sV 10.0.0.5",
+    "PORT    STATE SERVICE VERSION\n22/tcp  open  ssh     OpenSSH 7.2p2\n80/tcp  open  http    Apache httpd 2.4.18\n3306/tcp open mysql   MySQL 5.5.62", "nmap with -sV, then the IP.", "Version detection tells you which known vulnerabilities might apply."],
+  ["Scan only ports 1 to 1024 on that host.", [/nmap\s+.*-p\s*1-1024\s+.*10\.0\.0\.5/, /nmap\s+.*10\.0\.0\.5.*-p\s*1-1024/], "nmap -p 1-1024 10.0.0.5",
+    "22/tcp open ssh\n80/tcp open http\n(3306 not shown: outside range)", "The -p flag takes a range like 1-1024.", "Scoping scans limits noise and time. Always stay inside the authorized scope."],
+  ["MySQL 5.5.62 is outdated and exposed. In vulnerability management, what do you do first: patch or isolate? Type one word.", [/^(patch|upgrade|update)\b/, /^isolate\b/, /^restrict\b/], "patch",
+    "Ticket created: upgrade MySQL, and restrict 3306 to the app server only.", "Either answer is defensible: fix the software and shrink exposure.", "Do both: remediate the version and limit who can reach the port. Then rescan to validate."]
+], "Scan, analyze, prioritize, remediate, rescan. That cycle is vulnerability management.");
+
+FIX("sshd", "4.1", "4.1", "Harden sshd_config", "This SSH server config was copied from a lab. Find the insecure settings and repair them.", [
+  ["Port 22"],
+  ["PermitRootLogin yes", ["PermitRootLogin yes", "PermitRootLogin no", "PermitRootLogin without-password-and-keys", "PermitRootLogin maybe"], 1, "Direct root logins give attackers a known account to target. Log in as a named user and use sudo."],
+  ["PubkeyAuthentication yes"],
+  ["PasswordAuthentication yes", ["PasswordAuthentication yes", "PasswordAuthentication no", "PasswordAuthentication sometimes", "PasswordAuthentication yes # but log it"], 1, "Passwords can be guessed or sprayed. Key-based authentication resists brute force."],
+  ["MaxAuthTries 20", ["MaxAuthTries 50", "MaxAuthTries 3", "MaxAuthTries 100", "MaxAuthTries 20 # fine"], 1, "A low try limit slows online guessing."],
+  ["PermitEmptyPasswords yes", ["PermitEmptyPasswords no", "PermitEmptyPasswords yes # temporary", "PermitEmptyPasswords maybe", "# removed the line"], 0, "Accounts with empty passwords let anyone in. This must be no."],
+  ["UsePAM yes"]
+], "Hardened SSH: no root login, keys not passwords, few auth tries, no empty passwords.");
+
+FIX("webcode", "2.3", "2.4", "Review a vulnerable login handler", "A developer pushed this code. Find the lines an attacker can abuse.", [
+  ["db_pass = \"Winter2024!\"", ["db_pass = \"Winter2025!\"", "db_pass = os.environ[\"DB_PASS\"]", "db_pass = \"Winter2024!\"  # internal only", "db_pass = base64(\"Winter2024!\")"], 1, "Hardcoded secrets end up in source control. Load them from a secrets manager or environment."],
+  ["name = request.form[\"name\"]"],
+  ["query = \"SELECT * FROM users WHERE name='\" + name + \"'\"", ["query = \"SELECT * FROM users WHERE name='\" + name.upper() + \"'\"", "cur.execute(\"SELECT * FROM users WHERE name = %s\", (name,))", "query = \"SELECT * FROM users WHERE name='\" + name + \"' LIMIT 1\"", "query = f\"SELECT * FROM users WHERE name='{name}'\""], 1, "String-built SQL allows injection such as ' OR '1'='1. Parameterized queries keep data separate from commands."],
+  ["html = \"<p>Welcome \" + name + \"</p>\"", ["html = \"<p>Welcome \" + name + \"</p>\"", "html = \"<p>Welcome \" + escape_html(name) + \"</p>\"", "html = \"<p>Welcome \" + name.strip() + \"</p>\"", "html = \"<p>Welcome \" + name.lower() + \"</p>\""], 1, "Unescaped input rendered into a page is cross-site scripting. Encode output for the context it is used in."],
+  ["return render(html)"]
+], "Validate input, parameterize queries, encode output, and never hardcode secrets.");
+
+FIX("fwrules", "3.2", "4.1", "Audit firewall rules", "This iptables ruleset was built in a hurry. Find the rules that expose the network.", [
+  ["-A INPUT -i lo -j ACCEPT"],
+  ["-A INPUT -p tcp --dport 443 -j ACCEPT"],
+  ["-A INPUT -p tcp --dport 23 -j ACCEPT", ["-A INPUT -p tcp --dport 23 -j DROP", "-A INPUT -p tcp --dport 23 -j LOG", "-A INPUT -p udp --dport 23 -j ACCEPT", "-A INPUT -p tcp --dport 2323 -j ACCEPT"], 0, "Telnet is unencrypted and obsolete. Block it (or better, remove the rule and the service)."],
+  ["-A INPUT -p tcp --dport 3389 -j ACCEPT", ["-A INPUT -p tcp --dport 3389 -s 10.10.5.0/24 -j ACCEPT", "-A INPUT -p tcp --dport 3389 -j ACCEPT # monitored", "-A INPUT -p tcp --dport 3390 -j ACCEPT", "-A INPUT -p udp --dport 3389 -j ACCEPT"], 0, "RDP open to the internet is a top ransomware entry point. Restrict to an admin subnet or a VPN."],
+  ["-A INPUT -s 0.0.0.0/0 -j ACCEPT", ["-A INPUT -j DROP", "-A INPUT -s 10.0.0.0/8 -j ACCEPT", "-A INPUT -j ACCEPT", "-A INPUT -s 0.0.0.0/0 -j LOG"], 0, "An accept-all rule at the end defeats everything above. End with an implicit deny: drop what is not explicitly allowed."]
+], "Firewalls: allow only what is needed, restrict sources, and finish with default deny.");
+
 </script>
 <script id="engine">
 // ===== ENGINE: reusable for any cert content pack =====
@@ -2030,6 +2126,7 @@ function renderHQ() {
 // ---------- TRAIN ----------
 let MODES; const modes = () => (MODES = [
   ["run", "Daily run", "Spaced repetition. Due reviews plus new terms. The core habit.", "Every day"],
+  ...HANDS_MODES(),
   ["blitz", "60-second blitz", "Answer as many as you can before time runs out. Beat your best.", "Speed and recall"],
   ["match", "Match it", "Pair terms with meanings. Ports, attacks, agreements, and more.", `${PACK.matchSets.filter(inPool).length} sets`],
   ["sort", "Sort it", "Drop each item into the right bucket. Controls, risk responses, access models.", `${PACK.sorts.filter(inPool).length} sorting games`],
@@ -2056,6 +2153,7 @@ function renderTrain() {
   if (m === "log") h = list(PACK.logs, "log", x => "l:" + x.id, x => x.title, (x, k) => best(k));
   if (m === "blitz") h = `<p class="lead">Pick a pool. Every answer also counts toward your review schedule.</p><div class="focus"><button data-act="blitz" data-d="">All domains</button>${T(DT()).domains.map(d => `<button class="d${d.n}" data-act="blitz" data-d="${d.n}">${d.n}. ${esc(d.name)}</button>`).join("")}<button data-act="blitz" data-d="port">Ports only</button></div><p class="muted">${best("blitz")}</p>`;
   if (m === "risk") h = `<p class="lead">Five rounds of risk math with new numbers each time. Formulas: SLE = asset value x exposure factor. ALE = SLE x ARO.</p><button class="btn" data-act="risk">Start drill</button><p class="muted">${best("risk")}</p>`;
+  if (["typeit", "sim", "fix"].includes(m)) h = HANDS_TRAIN(m, list, best);
   if (m === "exam") { VIEW = "exam"; SUB.train = null; return render(); }
   if (m === "run") { SUB.train = null; return startRun(); }
   const title = MODES.find(x => x[0] === m)[1];
@@ -2166,7 +2264,7 @@ function startRun(d) {
 }
 function renderAct() {
   const a = ACT;
-  ({ quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, risk: renderRisk, exam: renderExamRun, done: renderDone })[a.type]();
+  ({ ...HANDS_ACT, quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, risk: renderRisk, exam: renderExamRun, done: renderDone })[a.type]();
 }
 function head(i, n, label) { return `<div class="playhead"><button class="x" data-act="quit">Exit</button><div class="bar"><i style="width:${n ? (i / n) * 100 : 0}%"></i></div><span class="count">${label || i + " / " + n}</span></div>`; }
 function optsHtml(q, picked, act) {
@@ -2427,9 +2525,159 @@ function submitExam() {
     note: `<b style="font-family:var(--head);font-size:22px">Approximate scaled score: ${scaled} / 900</b> (750 passes). This is a straight-line estimate; the real exam weights questions by difficulty.<div style="margin-top:12px">${bars}</div>`, missed, again: "exam", againArg: [a.n, a.tr] });
 }
 
+// ---------- HANDS-ON: type it, practice simulator, fix it ----------
+const hnorm = s => String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+function hlev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let p = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; }
+  return p[n];
+}
+function hAlts(term) {
+  const alts = [term], m = term.match(/^(.*?)\s*\((.*?)\)\s*$/);
+  if (m) alts.push(m[1], m[2]);
+  term.split(/\s*[\/,]\s*/).forEach(p => alts.push(p));
+  return alts.filter(a => hnorm(a).length >= 2);
+}
+function hAccept(typed, term) {
+  const t = hnorm(typed); if (!t) return false;
+  return hAlts(term).some(a => { const n = hnorm(a); if (t === n) return true; const tol = n.length >= 12 ? 2 : n.length >= 6 ? 1 : 0; return tol > 0 && hlev(t, n) <= tol; });
+}
+function hMask(def, term) {
+  let out = def;
+  hAlts(term).sort((x, y) => y.length - x.length).forEach(a => { if (a.length >= 3) out = out.replace(new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), "_____"); });
+  return out;
+}
+const hfocus = () => setTimeout(() => { const el = document.querySelector(".tin"); if (el) el.focus(); }, 30);
+const hSims = () => PACK.sims || [], hFixes = () => PACK.fixes || [];
+function HANDS_MODES() {
+  const nc = CARDS.filter(inPool).length, ns = hSims().filter(inPool).length, nf = hFixes().filter(inPool).length;
+  return [
+    ["typeit", "Type it", "See a definition, type the term. No options to pick from, so recall has to come from you.", `${nc} terms`],
+    ...(ns ? [["sim", PACK.simLabel || "Guided practice", PACK.simDesc || "Do the task yourself, one step at a time, with instant feedback.", `${ns} activities`]] : []),
+    ...(nf ? [["fix", PACK.fixLabel || "Fix the flaw", PACK.fixDesc || "Find the broken line, then choose the right repair.", `${nf} exercises`]] : [])
+  ];
+}
+function HANDS_TRAIN(m, list, best) {
+  if (m === "typeit") return `<p class="lead" style="margin-top:0">Ten terms per round. Hints cost you the point, but a close spelling still counts.</p><div class="focus"><button data-act="typeit" data-k="weak">Weak and due first</button><button data-act="typeit" data-k="new">Unseen terms</button><button data-act="typeit" data-k="all">Random mix</button></div><p class="muted">${best("typeit")}</p>`;
+  if (m === "sim") return `<p class="lead" style="margin-top:0">${esc(PACK.simLead || "Type your answer for each step. Stuck? Use Hint. Your score counts steps you got right on the first try.")}</p>` + list(hSims(), "sim", x => "sim:" + x.id, x => x.title, (x, k) => best(k));
+  if (m === "fix") return `<p class="lead" style="margin-top:0">${esc(PACK.fixLead || "Tap the line you think is wrong, then pick the repair. Tapping a line that is fine costs you.")}</p>` + list(hFixes(), "fix", x => "fix:" + x.id, x => x.title, (x, k) => best(k));
+  return "";
+}
+
+// type it
+function startTypeIt(k) {
+  const pool = CARDS.filter(inPool); const seen = pool.filter(c => S.items[c.id]), fresh = pool.filter(c => !S.items[c.id]);
+  const t = today(); let list;
+  if (k === "new") list = shuffle(fresh).concat(shuffle(seen));
+  else if (k === "all") list = shuffle(pool);
+  else list = shuffle(seen).sort((a, b) => (S.items[a.id].d <= t ? 0 : 1) - (S.items[b.id].d <= t ? 0 : 1) || S.items[a.id].b - S.items[b.id].b).concat(shuffle(fresh));
+  list = list.slice(0, 10); if (!list.length) return toast("No terms available");
+  ACT = { type: "typeit", list, i: 0, res: null, tries: 0, hintN: 0, bad: false, ok: 0, missed: [], xp0: S.xp }; render();
+}
+function renderTypeIt() {
+  const a = ACT, c = a.list[a.i]; const hint = c.t.split("").map((ch, k) => k < a.hintN || !/[A-Za-z0-9]/.test(ch) ? ch : "_").join("");
+  let h = `<div class="play">${head(a.i, a.list.length)}<div class="qcard"><div class="row">${ichip(c)}<span class="chip">Type it</span></div><p class="ask">Which term is this?</p><p class="prompt">${esc(hMask(c.d, c.t))}</p>`;
+  if (a.res == null) {
+    h += `<form data-hform="typeit" autocomplete="off"><input class="tin" name="v" placeholder="Type the term" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="row" style="margin-top:12px"><button class="btn" type="submit">Check</button><button class="btn ghost" type="button" data-act="tihint">Hint</button><button class="btn ghost" type="button" data-act="tishow">Show answer</button></div></form>`;
+    if (a.bad) h += `<p class="hint">Not quite. Try again, or use a hint.</p>`;
+    if (a.hintN) h += `<p style="font-family:var(--mono);font-size:18px;letter-spacing:.08em">${esc(hint)}</p>`;
+  } else {
+    h += `<div class="feedback ${a.res === "ok" ? "" : "no"}"><h4>${a.res === "ok" ? "Yes: " : a.res === "shown" ? "The answer: " : "Counted as a miss: "}${esc(c.t)}</h4>${a.res === "late" ? `<p>You got it, but with hints or retries, so it comes back sooner.</p>` : ""}${c.m ? `<div class="hook"><b>Hook:</b> ${esc(c.m)}</div>` : ""}</div><div class="next"><button class="btn" data-act="tinext">${a.i + 1 >= a.list.length ? "Finish" : "Next term"}</button></div>`;
+  }
+  app().innerHTML = h + `</div></div>`; if (a.res == null) hfocus();
+}
+function tiSubmit(v) {
+  const a = ACT; if (a.type !== "typeit" || a.res != null || !String(v).trim()) return; const c = a.list[a.i];
+  if (hAccept(v, c.t)) { const clean = a.tries === 0 && a.hintN === 0; a.res = clean ? "ok" : "late"; if (clean) a.ok++; else a.missed.push(c); grade(c.id, clean); save(); render(); }
+  else { a.tries++; a.bad = true; if (a.tries >= 3 && !a.hintN) a.hintN = 1; render(); }
+}
+function tiNext() {
+  const a = ACT; a.i++;
+  if (a.i >= a.list.length) { const k = "typeit"; S.best[k] = Math.max(S.best[k] || 0, a.ok); return finish({ title: "Type it", score: a.ok, of: a.list.length, xp: S.xp - a.xp0, note: "Counts terms you typed with no hints and no retries. Typing from memory is harder than recognizing, which is why it sticks.", missed: a.missed, again: "typeit", againArg: "weak" }); }
+  a.res = null; a.tries = 0; a.hintN = 0; a.bad = false; window.scrollTo(0, 0); render();
+}
+
+// practice simulator (terminal or worked-problem skin)
+function startSim(i) { const s = hSims()[i]; ACT = { type: "sim", idx: i, s, step: 0, log: [], tries: 0, hinted: false, first: 0, xp0: S.xp }; render(); }
+function renderSim() {
+  const a = ACT, s = a.s, st = s.steps[a.step], sheet = s.skin === "sheet", pr = s.prompt || "analyst@redcell:~$";
+  const log = a.log.map(l => sheet
+    ? `<div class="tl"><span class="pr">${l.bad ? "Try again" : "Answer"}:</span> ${esc(l.cmd)}</div><pre class="to ${l.bad ? "bad" : ""}">${esc(l.out)}</pre>`
+    : `<div class="tl"><span class="pr">${esc(pr)}</span> ${esc(l.cmd)}</div><pre class="to ${l.bad ? "bad" : ""}">${esc(l.out)}</pre>`).join("");
+  app().innerHTML = `<div class="play" style="max-width:860px">${head(a.step, s.steps.length)}<div class="row">${ichip(s)}<span class="chip">${sheet ? "Worked problem" : "Terminal lab"}</span></div>
+    <h2 style="font-size:24px;margin:10px 0 4px">${esc(s.title)}</h2><p class="muted" style="margin-top:0">${esc(s.brief)}</p>
+    <div class="panel" style="border-left:5px solid var(--accent)"><b>Step ${a.step + 1} of ${s.steps.length}:</b> ${esc(st.ask)}</div>
+    <div class="tbox ${sheet ? "sheet" : ""}">${log || `<span class="muted">${sheet ? "Work through each step below." : "Type commands at the prompt. Type help for the goal."}</span>`}</div>
+    <form data-hform="sim" autocomplete="off"><div class="tprompt"><span class="pr">${sheet ? "Answer:" : esc(pr)}</span><input class="tin" name="v" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${sheet ? "Type your answer" : "Type a command"}"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" type="submit">${sheet ? "Check" : "Run"}</button><button class="btn ghost" type="button" data-act="simhint">Hint</button><button class="btn ghost" type="button" data-act="simshow">Show me</button></div></form>
+    ${a.hinted || a.tries >= 2 ? `<div class="hook" style="margin-top:12px"><b>Hint:</b> ${esc(st.hint)}</div>` : ""}</div>`;
+  hfocus(); const tb = document.querySelector(".tbox"); if (tb) tb.scrollTop = tb.scrollHeight;
+}
+function simAdvance(cmd, shown) {
+  const a = ACT, s = a.s, st = s.steps[a.step]; const first = a.tries === 0 && !a.hinted && !shown;
+  a.log.push({ cmd, out: st.out + (st.why ? "\n\n# " + st.why : "") }); if (first) a.first++;
+  objStat(s, first); addXP(first ? 8 : 3); touchDay(); a.step++; a.tries = 0; a.hinted = false;
+  if (a.step >= s.steps.length) { const k = "sim:" + s.id; S.best[k] = Math.max(S.best[k] || 0, a.first); return finish({ title: s.title, score: a.first, of: s.steps.length, xp: S.xp - a.xp0, note: "Score counts steps you got right on the first try, with no hint.", tip: s.tip, again: "sim", againArg: a.idx }); }
+  save(); render();
+}
+function simSubmit(v) {
+  const a = ACT; if (a.type !== "sim") return; v = String(v).trim().replace(/\s+/g, " "); if (!v) return;
+  const st = a.s.steps[a.step], sheet = a.s.skin === "sheet";
+  if (!sheet && /^(help|\?)$/i.test(v)) { a.log.push({ cmd: v, out: "Goal: " + st.ask + "\nUse Hint if you are stuck. Show me reveals the answer (no point)." }); return render(); }
+  const vv = v.replace(/^sudo\s+/i, "");
+  if (st.ok.some(r => new RegExp(r, "i").test(vv))) return simAdvance(v, false);
+  a.tries++; a.log.push({ cmd: v, bad: true, out: sheet ? "Not quite. Check your work and try again." : "That does not do what this step needs. Re-read the task, or use Hint." }); render();
+}
+function simShow() { const a = ACT; const st = a.s.steps[a.step]; simAdvance(st.ans, true); }
+
+// fix the flaw
+function startFix(i) { const f = hFixes()[i]; ACT = { type: "fix", idx: i, f, sel: null, fixed: {}, tried: {}, first: 0, fps: 0, msg: "", xp0: S.xp }; render(); }
+function fixBugs(f) { return f.lines.map((l, i) => l.length > 1 ? i : -1).filter(i => i >= 0); }
+function renderFix() {
+  const a = ACT, f = a.f, bugs = fixBugs(f), nFixed = Object.keys(a.fixed).length, all = nFixed === bugs.length;
+  let h = `<div class="play" style="max-width:980px">${head(nFixed, bugs.length, nFixed + " / " + bugs.length + " fixed")}<div class="row">${ichip(f)}<span class="chip">Fix the flaw</span></div><h2 style="font-size:24px;margin:10px 0 4px">${esc(f.title)}</h2><p class="muted" style="margin-top:0">${esc(f.brief)}</p><div class="logbox">`;
+  f.lines.forEach((l, i) => { const fx = a.fixed[i] != null; h += `<button class="logline ${fx ? "tp" : a.sel === i ? "flag" : a.fine === i ? "fp" : ""}" data-act="fixl" data-i="${i}" ${fx || all ? "disabled" : ""}>${esc(fx ? l[1][l[2]] : l[0])}</button>`; });
+  h += `</div>`;
+  if (a.msg) h += `<div class="feedback ${a.msgBad ? "no" : ""}" style="margin-top:12px"><p style="margin:0">${esc(a.msg)}</p></div>`;
+  if (a.sel != null && !all) { const l = f.lines[a.sel], t = a.tried[a.sel] || []; h += `<div class="panel" style="margin-top:12px"><b>How should this line be fixed?</b><div class="opts" style="margin-top:10px">` + l[1].map((o, k) => `<button class="opt ${t.includes(k) ? "wrong" : ""}" data-act="fixo" data-k="${k}" ${t.includes(k) ? "disabled" : ""}><span class="k">${k + 1}</span><span style="font-family:var(--mono);font-size:14px">${esc(o)}</span></button>`).join("") + `</div></div>`; }
+  if (all) h += `<div class="panel" style="margin-top:14px"><b>What was wrong</b>` + bugs.map(i => `<p class="why" style="margin-left:0"><b>Line ${i + 1}:</b> ${esc(f.lines[i][3])}</p>`).join("") + `</div><div class="next"><button class="btn" data-act="fixdone">Finish</button></div>`;
+  else h += `<p class="kbd">${a.fps} false alarm${a.fps === 1 ? "" : "s"}</p>`;
+  app().innerHTML = h + `</div>`;
+}
+function fixLine(i) {
+  const a = ACT, l = a.f.lines[i]; a.fine = null; a.msgBad = false;
+  if (l.length > 1) { a.sel = i; a.msg = ""; } else { a.fps++; a.sel = null; a.fine = i; a.msgBad = true; a.msg = "Line " + (i + 1) + " is fine as written. Keep looking."; }
+  render();
+}
+function fixOpt(k) {
+  const a = ACT, i = a.sel, l = a.f.lines[i]; if (i == null) return;
+  if (k === l[2]) { const first = !(a.tried[i] || []).length; if (first) a.first++; a.fixed[i] = k; a.sel = null; a.msgBad = false; a.msg = "Fixed. " + l[3]; objStat(a.f, first); addXP(first ? 12 : 4); touchDay(); save(); }
+  else { (a.tried[i] = a.tried[i] || []).push(k); a.msgBad = true; a.msg = "That does not close the hole. Think about what an attacker could still do."; }
+  render();
+}
+function fixDone() {
+  const a = ACT, bugs = fixBugs(a.f).length, sc = Math.max(0, a.first - a.fps); const k = "fix:" + a.f.id; S.best[k] = Math.max(S.best[k] || 0, sc);
+  finish({ title: a.f.title, score: sc, of: bugs, xp: S.xp - a.xp0, note: `${a.first} repaired on the first try, ${a.fps} false alarm${a.fps === 1 ? "" : "s"} (each one subtracts from your score).`, tip: a.f.tip, again: "fix", againArg: a.idx });
+}
+const HANDS_ACT = { typeit: renderTypeIt, sim: renderSim, fix: renderFix };
+const HANDS_AGAIN = { typeit: x => startTypeIt(x), sim: x => startSim(x), fix: x => startFix(x) };
+const HANDS_ACTIONS = {
+  typeit: d => startTypeIt(d.k), tihint: () => { ACT.hintN = Math.min(ACT.hintN + 1, ACT.list[ACT.i].t.length); render(); },
+  tishow: () => { const a = ACT, c = a.list[a.i]; a.res = "shown"; a.missed.push(c); grade(c.id, false); save(); render(); }, tinext: () => tiNext(),
+  sim: d => startSim(+d.i), simhint: () => { ACT.hinted = true; render(); }, simshow: () => simShow(),
+  fix: d => startFix(+d.i), fixl: d => fixLine(+d.i), fixo: d => fixOpt(+d.k), fixdone: () => fixDone()
+};
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-hform]"); if (!f) return; e.preventDefault();
+  const v = new FormData(f).get("v") || ""; if (f.dataset.hform === "typeit") tiSubmit(v); else if (f.dataset.hform === "sim") simSubmit(v);
+});
+
+
 // ---------- events ----------
-const AGAIN = { run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), risk: () => startRisk(), exam: x => startExam(x[0], x[1]) };
+const AGAIN = { ...HANDS_AGAIN, run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), risk: () => startRisk(), exam: x => startExam(x[0], x[1]) };
 const ACTIONS = {
+  ...HANDS_ACTIONS,
   nav: d => { ACT = null; VIEW = d.v; SUB.train = null; window.scrollTo(0, 0); render(); },
   welcomed: () => { S.welcomed = true; save(); render(); },
   dloffline: () => downloadOffline(),
