@@ -1,7 +1,7 @@
 {
-  "name": "Red Cell Ops: Security Testing Role Prep",
+  "name": "Red Cell Ops: Pentest Study Game",
   "short_name": "Red Cell Ops",
-  "description": "Spaced-repetition and hands-on practice for the Red Cell role, CySA+, CEH, and CCNA CyberOps.",
+  "description": "Spaced-repetition game for PenTest+, CySA+, and CEH.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

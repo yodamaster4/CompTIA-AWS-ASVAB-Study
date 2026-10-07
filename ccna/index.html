@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#13223B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Study Trainer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Study Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F4; --surface:#FFFFFF; --sunk:#E3E8EF; --ink:#13223B; --muted:#56657C; --line:#CDD5E0;
+  --accent:#FF9F43; --accent-ink:#13223B; --ok:#1C7F52; --ok-bg:#DDF2E7; --bad:#B83434; --bad-bg:#F8E1E1;
+  --d1:#3566AE; --d2:#BC4E32; --d3:#6650A6; --d4:#177F72; --d5:#86741A;
+  --head:"Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r:10px;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0E1827; --surface:#162438; --sunk:#1D2E46; --ink:#E6ECF4; --muted:#9BAAC0; --line:#2B3D57;
+  --accent:#FFAA55; --accent-ink:#13223B; --ok:#4CC58A; --ok-bg:#153A2B; --bad:#F07A7A; --bad-bg:#43202A;
+  --d1:#6F9FE6; --d2:#E88468; --d3:#A08CDD; --d4:#49C1B0; --d5:#D2BE58;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1827; --surface:#162438; --sunk:#1D2E46; --ink:#E6ECF4; --muted:#9BAAC0; --line:#2B3D57;
+  --accent:#FFAA55; --accent-ink:#13223B; --ok:#4CC58A; --ok-bg:#153A2B; --bad:#F07A7A; --bad-bg:#43202A;
+  --d1:#6F9FE6; --d2:#E88468; --d3:#A08CDD; --d4:#49C1B0; --d5:#D2BE58;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,label.btn{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-wrap:anywhere}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--head);line-height:1.15;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{display:flex;align-items:center;gap:18px;min-height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:21px;letter-spacing:.01em;background:none;border:0;padding:0}
+.badge{width:34px;height:34px;border-radius:8px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:14px;font-weight:700}
+.nav{display:flex;gap:4px;margin-left:8px}
+.nav button{background:none;border:0;padding:8px 14px;border-radius:8px;font-family:var(--head);font-weight:600;font-size:16px;color:var(--muted)}
+.nav button[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
+.stats{margin-left:auto;display:flex;gap:16px;align-items:center;font-size:14px;color:var(--muted)}
+.stats b{font-family:var(--head);font-size:18px;color:var(--ink);font-weight:700}
+.stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.bnav{display:none}
+@media (max-width:760px){
+  .nav{display:none}
+  .stats .hide-sm{display:none}
+  .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+  .bnav button{flex:1;background:none;border:0;padding:10px 4px;font-family:var(--head);font-weight:600;font-size:15px;color:var(--muted);border-radius:8px}
+  .bnav button[aria-current="page"]{color:var(--ink);background:var(--sunk)}
+  main{padding-bottom:84px}
+  body.playing .bnav{display:none}
+}
+main{padding:26px 0 60px}
+.brand,.stat{white-space:nowrap}
+@media (max-width:760px){.top .wrap{gap:10px;min-height:56px}.brand{font-size:18px;gap:8px}.badge{width:30px;height:30px;font-size:13px}.stats{gap:12px;font-size:11.5px}.stats b{font-size:15px}.wrap{padding:0 14px}.qcard{padding:18px}.qcard .prompt{font-size:19px}.qcard .prompt.term{font-size:26px}.today h1{font-size:28px}}
+@media (max-width:360px){.brand{font-size:0;gap:0}.brand .badge{font-size:13px}}
+@media (hover:none){.keyhint{display:none}}
+
+/* generic */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--ink);background:var(--accent);color:var(--accent-ink);font-family:var(--head);font-weight:700;font-size:17px;padding:11px 20px;border-radius:9px;min-height:46px}
+.btn:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.small{font-size:15px;padding:7px 14px;min-height:38px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.muted{color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 9px;border-radius:99px;background:color-mix(in srgb,var(--dc,var(--muted)) 16%,transparent);color:var(--dc,var(--muted));max-width:100%;line-height:1.3}
+.d1{--dc:var(--d1)}.d2{--dc:var(--d2)}.d3{--dc:var(--d3)}.d4{--dc:var(--d4)}.d5{--dc:var(--d5)}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:34px 0 14px}
+.sechead h2{font-size:24px}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--dc,var(--accent));border-radius:99px;transition:width .4s}
+
+/* HQ */
+.today h1{font-size:32px;margin-bottom:6px}
+.today .counts{display:flex;gap:22px;margin:14px 0 18px}
+.today .counts div{font-size:14px;color:var(--muted)}
+.today .counts b{display:block;font-family:var(--head);font-size:30px;color:var(--ink)}
+.focus{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.focus button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:14px;font-weight:700;color:var(--dc,var(--ink))}
+.focus button:hover{border-color:var(--dc,var(--ink))}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi b{display:block;font-family:var(--head);font-size:28px;font-weight:700}
+.kpi span{font-size:14px;color:var(--muted)}
+.spark{display:flex;gap:4px;align-items:flex-end;height:44px;margin-top:10px}
+.spark i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:3px;opacity:.9}
+.spark i.zero{background:var(--line)}
+
+/* floor plan: the facility map */
+.plan{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px;background:var(--surface);border:2px solid var(--ink);border-radius:4px;position:relative;
+  background-image:linear-gradient(var(--sunk) 1px,transparent 1px),linear-gradient(90deg,var(--sunk) 1px,transparent 1px);background-size:22px 22px}
+.wing{border:2px solid var(--dc);background:var(--surface);border-radius:3px;padding:12px;display:flex;flex-direction:column;gap:10px}
+@media (max-width:860px){.plan{grid-template-columns:1fr}}
+.wing header{display:flex;align-items:baseline;gap:10px}
+.wing header .num{font-family:var(--head);font-weight:700;font-size:26px;color:var(--dc);line-height:1}
+.wing header h3{font-size:16px}
+.wing header .w{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.room{--m:0;position:relative;text-align:left;border:1.5px solid color-mix(in srgb,var(--dc) 55%,var(--line));border-radius:3px;padding:8px 9px 9px;min-height:74px;
+  background:linear-gradient(to top,color-mix(in srgb,var(--dc) 32%,transparent) calc(var(--m) * 100%),var(--surface) calc(var(--m) * 100%));display:flex;flex-direction:column;gap:2px}
+.room:hover{border-color:var(--dc)}
+.room .rn{font-family:var(--head);font-weight:700;font-size:15px;color:var(--dc)}
+.room .rt{font-size:13.5px;line-height:1.25}
+.room .rp{margin-top:auto;font-size:12px;color:var(--muted)}
+.room.secured{border-color:var(--dc);border-width:2.5px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);vertical-align:-2px;margin-right:6px;border-radius:2px}
+
+/* train */
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.mode{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:6px;min-height:150px}
+.mode:hover{border-color:var(--ink)}
+.mode h3{font-size:20px}
+.mode p{margin:0;color:var(--muted);font-size:15px}
+.mode .tag{margin-top:auto;font-size:13px;font-weight:700;color:var(--muted)}
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.pick{text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--dc);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.pick:hover{border-color:var(--dc)}
+.pick b{font-family:var(--head);font-size:17px}
+.pick small{color:var(--muted);font-size:13px}
+
+/* play area */
+.play{max-width:760px;margin:0 auto}
+.playhead{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.playhead .bar{flex:1}
+.x{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-weight:700;font-size:14px}
+.count{font-family:var(--head);font-weight:600;font-size:15px;color:var(--muted);white-space:nowrap}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+.qcard .ask{font-size:14px;color:var(--muted);margin:12px 0 4px}
+.qcard .prompt{font-size:21px;line-height:1.4;margin:0 0 18px}
+.qcard .prompt.term{font-family:var(--head);font-size:30px;font-weight:700}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;display:flex;gap:12px;align-items:flex-start;background:var(--bg);border:2px solid var(--line);border-radius:9px;padding:12px 14px;font-size:17px}
+.opt:hover:not([disabled]){border-color:var(--ink)}
+.opt .k{flex:none;width:26px;height:26px;border-radius:6px;border:1.5px solid var(--muted);display:grid;place-items:center;font-family:var(--head);font-weight:700;font-size:14px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt[disabled]{cursor:default}
+.feedback{margin-top:16px;border-radius:9px;padding:14px 16px;border-left:5px solid var(--ok);background:var(--ok-bg)}
+.feedback.no{border-left-color:var(--bad);background:var(--bad-bg)}
+.feedback h4{margin:0 0 4px;font-family:var(--head);font-size:18px}
+.feedback p{margin:4px 0}
+.hook{margin-top:8px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.hook b{font-family:var(--head)}
+.next{margin-top:16px;display:flex;justify-content:flex-end;gap:10px}
+.learn .term{font-family:var(--head);font-size:34px;font-weight:700;margin:10px 0}
+.learn .def{font-size:20px;line-height:1.45}
+.newtag{font-family:var(--head);font-weight:700;font-size:13px;background:var(--accent);color:var(--accent-ink);padding:2px 8px;border-radius:5px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.shake{animation:shake .25s 2}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}.bar>i{transition:none}}
+.kbd{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* match / sort / order */
+.match{display:grid;grid-template-columns:1fr 1.5fr;gap:12px}
+.match .col{display:grid;gap:8px;align-content:start}
+.tile{text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:8px;padding:10px 12px;font-size:15px;min-height:52px}
+.tile.term{font-family:var(--head);font-weight:600;font-size:16px}
+.tile.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+.tile.done{border-color:var(--ok);background:var(--ok-bg);opacity:.75}
+.tile.bad{border-color:var(--bad);background:var(--bad-bg)}
+@media (max-width:560px){.match{grid-template-columns:1fr 1.3fr}.tile{font-size:14px;padding:8px}}
+.tray{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:50px}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.bucket{text-align:left;background:var(--surface);border:2px dashed var(--line);border-radius:10px;padding:10px;min-height:120px;display:flex;flex-direction:column;gap:6px}
+.bucket:hover{border-color:var(--ink)}
+.bucket h4{margin:0;font-family:var(--head);font-size:16px}
+.bucket .in{font-size:13.5px;background:var(--ok-bg);border-radius:6px;padding:4px 7px}
+.hint{font-size:14px;color:var(--bad);margin-top:6px}
+.seq{display:grid;gap:8px;margin-bottom:16px;counter-reset:s}
+.seq div{background:var(--ok-bg);border:2px solid var(--ok);border-radius:8px;padding:9px 12px;font-weight:700;counter-increment:s}
+.seq div::before{content:counter(s) ". ";font-family:var(--head)}
+
+/* logs */
+.logbox{background:#0F1A2A;color:#D8E2F0;border-radius:10px;padding:10px;overflow-x:auto}
+.logline{display:block;width:100%;text-align:left;background:none;border:0;border-left:4px solid transparent;color:inherit;font-family:var(--mono);font-size:13.5px;padding:8px 10px;white-space:pre;border-radius:4px}
+.logline:hover{background:#1B2A40}
+.logline.flag{border-left-color:#F5BC4A;background:#2A2A1E}
+.logline.tp{border-left-color:#4CC58A;background:#153A2B}
+.logline.fp{border-left-color:#F07A7A;background:#43202A}
+.logline.fn{border-left-color:#F07A7A;background:#2B1F2A;outline:1px dashed #F07A7A}
+.why{font-size:14px;margin:4px 0 10px 14px;color:var(--muted)}
+
+/* results */
+.result h2{font-size:30px}
+.big{font-family:var(--head);font-size:56px;font-weight:700;line-height:1}
+.dbar{display:grid;grid-template-columns:190px 1fr 50px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+@media (max-width:560px){.dbar{grid-template-columns:120px 1fr 44px}}
+.missed{margin-top:18px;display:grid;gap:10px}
+.missed div{border-left:4px solid var(--bad);padding:6px 12px;background:var(--surface);border-radius:4px}
+
+/* exam */
+.qnav{display:flex;flex-wrap:wrap;gap:5px;margin-top:16px}
+.qnav button{width:34px;height:34px;border:1.5px solid var(--line);background:var(--surface);border-radius:6px;font-size:13px;font-weight:700}
+.qnav button.ans{background:var(--sunk)}
+.qnav button.cur{border-color:var(--ink);border-width:2.5px}
+.qnav button.flg{box-shadow:inset 0 -4px 0 var(--accent)}
+.timer{font-family:var(--head);font-weight:700;font-size:18px}
+
+/* library */
+details.obj{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--dc);border-radius:6px;margin-bottom:8px}
+details.obj summary{cursor:pointer;padding:12px 16px;display:flex;gap:12px;align-items:baseline;list-style:none}
+details.obj summary::-webkit-details-marker{display:none}
+details.obj summary .rn{font-family:var(--head);font-weight:700;color:var(--dc);min-width:32px}
+details.obj summary .pct{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+.objbody{padding:0 16px 16px}
+.terms{display:grid;gap:10px;margin:10px 0 14px}
+.terms div{border-top:1px solid var(--line);padding-top:10px}
+.terms b{font-family:var(--head);font-size:16.5px}
+.terms p{margin:2px 0}
+.terms em{color:var(--muted);font-size:14.5px}
+.box{display:inline-block;font-size:12px;font-weight:700;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--muted);margin-left:6px;vertical-align:1px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-family:var(--head);font-weight:600}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;background:var(--surface)}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--head);font-size:15px}
+td.num{font-family:var(--mono);white-space:nowrap}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:14px 0}
+.facts div{background:var(--sunk);border-radius:8px;padding:12px}
+.facts b{display:block;font-family:var(--head);font-size:22px}
+.facts span{font-size:13.5px;color:var(--muted)}
+input[type=date],select{font:inherit;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+.welcome{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.welcome ol{margin:8px 0 12px;padding-left:22px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:9px;font-weight:700;z-index:50;font-size:15px}
+.sync{font-size:12px;color:var(--muted)}
+p.lead{font-size:18px;max-width:62ch}
+.labwarn{margin:14px 0;padding:12px 14px;border-radius:9px;border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface));font-size:15px}
+.labh{font-size:20px;margin:22px 0 10px}
+.steps{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.step{min-width:0;display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.step.on{border-color:var(--ok);background:color-mix(in srgb,var(--ok-bg) 60%,var(--surface))}
+.tick{flex:none;width:30px;height:30px;border-radius:8px;border:2px solid var(--muted);background:var(--surface);position:relative}
+.tick[aria-pressed="true"]{background:var(--ok);border-color:var(--ok)}
+.tick[aria-pressed="true"]::after{content:"";position:absolute;left:9px;top:3px;width:8px;height:15px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.sbody{min-width:0;flex:1}.sbody h4{margin:3px 0 4px;font-family:var(--head);font-size:17px}.sbody p{margin:4px 0}
+.step.on .sbody h4{text-decoration:line-through;text-decoration-color:var(--ok)}
+.see{font-size:14.5px;color:var(--muted)}
+.codewrap{position:relative;margin:8px 0;max-width:100%;min-width:0}
+.code{margin:0;background:#0F1A2A;color:#D8E2F0;font-family:var(--mono);font-size:13px;line-height:1.5;padding:12px 14px;padding-right:74px;border-radius:8px;overflow-x:auto;white-space:pre;overflow-wrap:normal}
+.copy{position:absolute;top:6px;right:6px;background:#1B2A40!important;color:#D8E2F0!important;border-color:#2B3D57!important;min-height:30px!important;padding:4px 10px!important;font-size:13px!important}
+
+.rlist{display:grid;gap:7px;margin-bottom:6px}.rlist div{display:grid;grid-template-columns:70px 1fr 42px;gap:8px;align-items:center;font-size:14px}.rlist b{font-family:var(--head);font-size:16px!important;display:inline!important}
+.trackbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.seg{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.seg button{text-align:left;border:2px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 13px;display:flex;flex-direction:column;max-width:230px}
+.seg button b{font-family:var(--head);font-size:16px}
+.seg button small{font-size:12.5px;color:var(--muted);line-height:1.3}
+.seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--surface);box-shadow:inset 0 -4px 0 var(--accent)}
+@media (max-width:760px){.seg{margin-left:0}.seg button{max-width:none;flex:1 1 100%}}
+
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <button class="brand" data-act="nav" data-v="hq" aria-label="home" id="brandBtn"><span class="badge" id="brandBadge">RC</span><span id="brandName">Study</span></button>
+  <nav class="nav" id="nav"></nav>
+  <div class="stats" id="stats"></div>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<nav class="bnav" id="bnav"></nav>
+<script id="pack">
+// ============================================================
+//  CCNA OPS - two-track study game
+//  v1.1 = current 200-301 blueprint (retires Feb 2, 2027)
+//  v2.0 = new 200-301 blueprint (live Feb 3, 2027)
+//  Shared topics are tagged to both; version-only topics to one.
+// ============================================================
+const PACK = {
+  id: "ccna-ops",
+  title: "CCNA Ops",
+  brand: "CCNA Ops",
+  badge: "CC",
+  mapTitle: "Your network",
+  roomWord: "domains",
+  levels: ["Cable puller", "Help desk", "Net tech", "Associate", "Network engineer", "Network architect"],
+  trackOrder: ["v11", "v20"],
+  tracks: {
+    v11: {
+      key: "v11", code: "200-301 v1.1", short: "v1.1", label: "CCNA (current exam)",
+      status: "Current exam. Retires February 2, 2027.",
+      questions: 100, minutes: 120, pass: 825, price: "$300",
+      domains: [
+        { n: 1, name: "Network Fundamentals", w: 20, short: "Fundamentals" },
+        { n: 2, name: "Network Access", w: 20, short: "Access" },
+        { n: 3, name: "IP Connectivity", w: 25, short: "Connectivity" },
+        { n: 4, name: "IP Services", w: 10, short: "Services" },
+        { n: 5, name: "Security Fundamentals", w: 15, short: "Security" },
+        { n: 6, name: "Automation & Programmability", w: 10, short: "Automation" }
+      ],
+      objectives: {
+        "1.1": ["Network components", "Role and function of routers, switches, firewalls, APs, and more"],
+        "1.2": ["Topology architectures", "Two-tier, three-tier, spine-leaf, WAN, SOHO, cloud"],
+        "1.3": ["Interfaces and cabling", "Fiber vs copper, media, and connection types"],
+        "1.4": ["Interface and cable issues", "Collisions, errors, duplex and speed mismatches"],
+        "1.5": ["TCP vs UDP", "Compare the two transport protocols"],
+        "1.6": ["IPv4 addressing and subnetting", "Configure and verify IPv4 and subnets"],
+        "1.7": ["Private IPv4", "RFC 1918 private address ranges"],
+        "1.8": ["IPv6 addressing", "Configure and verify IPv6 and prefixes"],
+        "1.9": ["IPv6 address types", "Unicast, anycast, multicast, EUI-64"],
+        "1.10": ["Verify client IP", "Check IP settings on Windows, macOS, Linux"],
+        "1.11": ["Wireless principles", "Channels, SSID, RF, encryption"],
+        "1.12": ["Virtualization", "Server virtualization, containers, VRFs"],
+        "1.13": ["Switching concepts", "MAC learning, flooding, the MAC table"],
+        "2.1": ["VLANs", "Configure VLANs across switches, access and voice ports"],
+        "2.2": ["Interswitch connectivity", "Trunk ports, 802.1Q, native VLAN"],
+        "2.3": ["Discovery protocols", "CDP and LLDP"],
+        "2.4": ["EtherChannel", "Layer 2/3 EtherChannel with LACP"],
+        "2.5": ["Spanning Tree (RSTP)", "Rapid PVST+, roles, states, PortFast, guards"],
+        "2.6": ["Wireless architectures", "AP modes and Cisco wireless designs"],
+        "2.7": ["WLAN physical connections", "AP, WLC, access/trunk ports, LAG"],
+        "2.8": ["Device management access", "Telnet, SSH, HTTP(S), console, AAA, cloud"],
+        "2.9": ["WLAN GUI config", "WLAN creation, security, QoS in the GUI"],
+        "3.1": ["Routing table", "Codes, prefix, mask, next hop, AD, metric"],
+        "3.2": ["Forwarding decisions", "Longest prefix match, AD, metric"],
+        "3.3": ["Static routing", "Default, network, host, and floating static routes"],
+        "3.4": ["Single-area OSPFv2", "Adjacencies, network types, DR/BDR, router ID"],
+        "3.5": ["First hop redundancy", "Purpose and function of FHRPs"],
+        "4.1": ["NAT", "Inside source NAT, static and pools"],
+        "4.2": ["NTP", "Client and server mode time sync"],
+        "4.3": ["DHCP and DNS", "Role of DHCP and DNS in the network"],
+        "4.4": ["SNMP", "Function of SNMP in operations"],
+        "4.5": ["Syslog", "Facilities and severity levels"],
+        "4.6": ["DHCP client and relay", "Configure and verify"],
+        "4.7": ["QoS", "Per-hop behavior: classify, mark, queue, police, shape"],
+        "4.8": ["SSH remote access", "Configure devices for SSH"],
+        "4.9": ["TFTP/FTP", "Capabilities and functions"],
+        "5.1": ["Security concepts", "Threats, vulnerabilities, exploits, mitigations"],
+        "5.2": ["Security program", "Awareness, training, physical access control"],
+        "5.3": ["Device access control", "Local password control"],
+        "5.4": ["Password policy", "Complexity, management, MFA, certs, biometrics"],
+        "5.5": ["VPNs", "IPsec remote-access and site-to-site"],
+        "5.6": ["Access control lists", "Configure and verify ACLs"],
+        "5.7": ["Layer 2 security", "DHCP snooping, DAI, port security"],
+        "5.8": ["AAA", "Authentication, authorization, accounting"],
+        "5.9": ["Wireless security", "WPA, WPA2, WPA3"],
+        "5.10": ["WLAN WPA2 PSK", "Configure WLAN with WPA2 PSK in the GUI"],
+        "6.1": ["Automation impact", "How automation changes network management"],
+        "6.2": ["Controller-based networking", "Traditional vs controller-based"],
+        "6.3": ["SDN architecture", "Overlay, underlay, fabric, control/data plane, APIs"],
+        "6.4": ["AI and ML in networks", "Generative and predictive AI, machine learning"],
+        "6.5": ["REST APIs", "Auth, CRUD, HTTP verbs, data encoding"],
+        "6.6": ["Config management", "Ansible and Terraform"],
+        "6.7": ["JSON", "Recognize JSON-encoded data"]
+      }
+    },
+    v20: {
+      key: "v20", code: "200-301 v2.0", short: "v2.0", label: "CCNA (new, Feb 2027)",
+      status: "New exam. Live February 3, 2027. Heavy troubleshooting focus.",
+      questions: 100, minutes: 120, pass: 825, price: "$300",
+      domains: [
+        { n: 1, name: "Network Infrastructure & Connectivity", w: 25, short: "Infrastructure" },
+        { n: 2, name: "Switching & Network Access", w: 25, short: "Switching" },
+        { n: 3, name: "IP Routing", w: 20, short: "Routing" },
+        { n: 4, name: "Network Services & Security", w: 20, short: "Services & Security" },
+        { n: 5, name: "AI, Network Operations & Management", w: 10, short: "AI & Ops" }
+      ],
+      objectives: {
+        "1.1": ["Diagnose interface and cable issues", "Collisions, errors, duplex, speed, distance, signal, pinout, cable types"],
+        "1.2": ["Hypervisors, VMs, containers", "Role and function of virtualization"],
+        "1.3": ["Troubleshoot IPv4 and subnetting", "Address config, assignment, public/private subnetting"],
+        "1.4": ["Troubleshoot IPv6", "Address config, assignment, prefix sizing, EUI-64"],
+        "1.5": ["Wireless principles", "Band/channel selection, RF, security protocols, interference"],
+        "1.6": ["Troubleshoot client connectivity", "IP config, reachability, wireless security on Win/Mac/Linux"],
+        "1.7": ["Troubleshoot DHCPv4", "Client, server, and relay on IOS"],
+        "2.1": ["Configure infrastructure connectivity", "Switch-to-switch and switch-to-router links, trunks, EtherChannel, SVI"],
+        "2.2": ["Configure edge-host port attributes", "VLAN, PoE, port channel, LACP for hosts and appliances"],
+        "2.3": ["Validate documentation (CDP/LLDP)", "Confirm topology with discovery protocols"],
+        "2.4": ["Troubleshoot with show commands", "show, logs, ping, extended ping, traceroute, packet capture"],
+        "2.5": ["Configure Rapid PVST+", "Roles, states, PortFast, root/loop/BPDU guard"],
+        "3.1": ["Interpret the routing table", "Find the next hop: protocol, prefix, AD, metric, default route"],
+        "3.2": ["Troubleshoot static routing", "Default, network, host, floating (IPv4 and IPv6)"],
+        "3.3": ["Single-area OSPFv2 and OSPFv3", "OSPF for IPv4 and IPv6: adjacencies, types, DR/BDR, router ID"],
+        "3.4": ["Interpret FHRP status", "Operational status of HSRP and VRRP"],
+        "4.1": ["Local users and AAA client", "Local usernames; TACACS+ and RADIUS for management"],
+        "4.2": ["Secure file transfer", "Manage config and software with SFTP/SCP"],
+        "4.3": ["NAT/PAT on IOS XE", "Configure address translation"],
+        "4.4": ["Diagnose DNS records", "A, AAAA, CNAME, MX, NS, PTR for host/web/mail access"],
+        "4.5": ["VPNs", "IPsec remote-access and site-to-site: protocols and transport modes"],
+        "4.6": ["IPv4 ACLs", "Standard, extended, numbered, and named ACLs"],
+        "4.7": ["Layer 2 security", "DHCP snooping, DAI, storm control, RA guard, port security"],
+        "5.1": ["Agentic AI in operations", "Role of agentic AI in running networks"],
+        "5.2": ["Prompting generative AI", "Choose prompts: data classification, format, persona, instructions"],
+        "5.3": ["Network management approaches", "Device, cloud, controller, automation, infrastructure as code"],
+        "5.4": ["SNMP", "Function of SNMP in operations"],
+        "5.5": ["Config management (Ansible)", "Use Ansible to execute commands"],
+        "5.6": ["Interpret syslog", "Message content, severity levels, facilities"]
+      }
+    }
+  },
+  cards: [], mcq: [], sorts: [], orders: [], scenarios: [], logs: [], matchSets: [], drills: [],
+  reference: [], hooks: [], tips: []
+};
+
+// Dual-track tag helper.
+// C(o11, o20, family, term, def, hook)
+//  - o11: v1.1 objective string, or null if not on v1.1
+//  - o20: v2.0 objective string, or null if not on v2.0
+function TAGS(o11, o20) { const x = {}; if (o11) x.v11 = o11; if (o20) x.v20 = o20; return x; }
+function C(o11, o20, f, t, d, m) { PACK.cards.push({ x: TAGS(o11, o20), f, t, d, m: m || "" }); }
+
+// ====================================================================
+//  DOMAIN: NETWORK FUNDAMENTALS / INFRASTRUCTURE  (v1.1 D1 / v2.0 D1)
+// ====================================================================
+// Components: v1.1 1.1 "role and function". In v2.0 devices appear inside config/troubleshoot objectives (2.2.e appliances); keep on v1.1, tag the router/switch to v2.0 routing/switching where core.
+C("1.1", null, "comp", "Router", "A Layer 3 device that forwards packets between different networks using IP addresses and a routing table.", "Connects networks; thinks in IP.");
+C("1.1", null, "comp", "Layer 2 switch", "Forwards frames within a LAN using MAC addresses and a MAC address table.", "Connects a LAN; thinks in MAC.");
+C("1.1", null, "comp", "Layer 3 switch", "A switch that can also route between VLANs/networks at near-switching speed.", "A switch that can route too.");
+C("1.1", null, "comp", "Next-generation firewall (NGFW)", "A firewall adding deep inspection, application awareness, and integrated IPS beyond port/IP filtering.", "Understands apps, not just ports.");
+C("1.1", null, "comp", "IPS", "Intrusion Prevention System: inspects traffic and actively blocks detected threats inline.", "Spots the attack and stops it.");
+C("1.1", "2.2", "comp", "Access point (AP)", "Bridges wireless clients onto the wired network; the radio end of Wi-Fi. Connects to a switch access/trunk port, often powered by PoE.", "The Wi-Fi on-ramp.");
+C("1.1", null, "comp", "Wireless LAN controller (WLC)", "Centrally manages many lightweight APs: config, security, and roaming.", "The brain behind the APs.");
+C("1.1", null, "comp", "Endpoint", "A user or device at the edge of the network: PC, phone, printer, IoT device.", "Where the network meets the user.");
+C("1.1", null, "comp", "Server", "A host that provides services (web, DNS, DHCP, files) to clients.", "The service provider host.");
+C("1.1", "2.2", "comp", "PoE", "Power over Ethernet: delivers power to devices (APs, phones, cameras) over the data cable. v2.0 adds configuring PoE on switch ports.", "Power and data on one wire.");
+
+// Topologies: v1.1 only (removed as standalone in v2.0)
+C("1.2", null, "topo", "Two-tier (collapsed core)", "Access layer connects to a combined distribution/core layer. Common in small/medium networks.", "Access + collapsed core.");
+C("1.2", null, "topo", "Three-tier", "Access, distribution, and core layers kept separate. Scales for large enterprises.", "Access, distribution, core.");
+C("1.2", null, "topo", "Spine-leaf", "Every leaf switch connects to every spine switch. Low, predictable latency; common in data centers.", "Every leaf to every spine.");
+C("1.2", null, "topo", "WAN", "Wide Area Network: connects sites over long distances, often via a service provider.", "Links far-apart sites.");
+C("1.2", null, "topo", "SOHO", "Small Office/Home Office: a small network, often one combined router/switch/AP device.", "The home/small-biz setup.");
+C("1.2", null, "topo", "On-premises vs cloud", "On-prem runs in your own facility; cloud rents compute/services from a provider over the internet.", "Your building vs. rented cloud.");
+
+// Cabling: v1.1 1.3 compare + 1.4 issues; v2.0 1.1 diagnose (expanded: distance, signal, pinout)
+C("1.3", "1.1", "cable", "Single-mode fiber (SMF)", "A thin glass core carrying one light path with a laser; long distances, higher cost.", "One beam, goes far.");
+C("1.3", "1.1", "cable", "Multimode fiber (MMF)", "A wider core carrying multiple light paths with LEDs; shorter distances, lower cost.", "Many beams, shorter runs.");
+C("1.3", "1.1", "cable", "Copper (twisted pair)", "UTP cabling (Cat5e/6); cheap and common but limited to ~100 m and prone to EMI.", "Cheap, ~100 m, office standard.");
+C("1.3", "1.1", "cable", "Straight-through vs crossover", "Straight-through connects unlike devices (PC-switch); crossover connects like devices. Auto-MDIX often makes it moot.", "Unlike = straight, like = crossover.");
+C(null, "1.1", "cable", "Pinout and signal issues (v2.0)", "v2.0 adds diagnosing distance limits, poor signal levels, and wrong pinouts as cable faults, not just duplex/speed.", "Check distance, signal, and pinout too.");
+C("1.4", "1.1", "cable", "Collision", "Two devices transmit at once on a shared (half-duplex) segment, corrupting both frames.", "Two talkers, one wire.");
+C("1.4", "1.1", "cable", "Duplex mismatch", "One side full-duplex, the other half. Causes late collisions and poor performance.", "One listens, one talks over it.");
+C("1.4", "1.1", "cable", "Speed mismatch", "Two link ends set to different speeds won't form a working link.", "100 vs 1000 means no link.");
+C("1.4", "1.1", "cable", "Interface errors (CRC)", "CRC errors suggest cabling, interference, or duplex issues corrupting frames.", "Bad frames = check Layer 1.");
+
+// TCP/UDP: v1.1 only (comparison removed in v2.0)
+C("1.5", null, "transport", "TCP", "Connection-oriented transport with handshake, sequencing, acknowledgments, and retransmission. Reliable but slower.", "Reliable, ordered, acknowledged.");
+C("1.5", null, "transport", "UDP", "Connectionless transport with no handshake or retransmission. Fast and low-overhead; good for voice/video/DNS.", "Fast, no guarantees.");
+C("1.5", null, "transport", "TCP three-way handshake", "SYN, SYN-ACK, ACK: the exchange that sets up a TCP connection.", "SYN, SYN-ACK, ACK.");
+C("1.5", "4.4", "transport", "Common port numbers", "Identify the service: HTTP 80, HTTPS 443, SSH 22, Telnet 23, DNS 53, DHCP 67/68, FTP 20/21.", "The app's apartment number.");
+
+// IPv4 + subnetting: shared (v1.1 1.6/1.7, v2.0 1.3 troubleshoot)
+C("1.6", "1.3", "ipv4", "IPv4 address", "A 32-bit address in four dotted octets (e.g. 192.168.1.10), split into network and host portions by the mask.", "32 bits, four octets.");
+C("1.6", "1.3", "ipv4", "Subnet mask", "Marks which bits are network vs host. /24 = 255.255.255.0.", "The network/host divider.");
+C("1.6", "1.3", "ipv4", "Network vs broadcast address", "First address in a subnet is the network ID; last is the broadcast. Neither is usable by a host.", "First and last are reserved.");
+C("1.6", "1.3", "ipv4", "Usable hosts formula", "Usable hosts = 2^(host bits) - 2 (subtracting network and broadcast).", "2^h minus 2.");
+C("1.6", "1.3", "ipv4", "CIDR / prefix length", "Slash notation for the mask: /26 means 26 network bits.", "Count the network bits.");
+C("1.6", "1.3", "ipv4", "Subnet increment (block size)", "256 minus the interesting octet value; subnets step by this amount. /26 = block size 64.", "256 minus the mask octet.");
+C("1.6", "1.3", "ipv4", "VLSM", "Variable Length Subnet Masking: using different mask lengths to size subnets to need and save addresses.", "Right-size each subnet.");
+C("1.7", "1.3", "ipv4", "Private IPv4 ranges (RFC 1918)", "10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16. Not routable on the internet; need NAT.", "10, 172.16-31, 192.168.");
+C("1.7", "1.3", "ipv4", "APIPA", "169.254.0.0/16: a host assigns itself this when DHCP fails. A sign of a DHCP problem.", "169.254 = DHCP failed.");
+C("1.7", "1.3", "ipv4", "Loopback", "127.0.0.0/8 (usually 127.0.0.1): tests the local TCP/IP stack.", "127.0.0.1 = talk to yourself.");
+
+// IPv6: shared (v1.1 1.8/1.9, v2.0 1.4 troubleshoot)
+C("1.8", "1.4", "ipv6", "IPv6 address", "A 128-bit address in eight hextets of hex, separated by colons.", "128 bits, hex and colons.");
+C("1.8", "1.4", "ipv6", "IPv6 shortening", "Drop leading zeros in a hextet; replace one run of all-zero hextets with :: (once only).", "Trim zeros, :: once.");
+C("1.8", "1.4", "ipv6", "IPv6 prefix", "The network portion, written as /64 in most LANs.", "Usually /64 on a LAN.");
+C("1.9", "1.4", "ipv6", "Global unicast (GUA)", "A public, internet-routable IPv6 address, typically starting 2000::/3.", "Public IPv6, starts with 2.");
+C("1.9", "1.4", "ipv6", "Unique local (ULA)", "Private IPv6 for internal use, FC00::/7 (commonly FD00::/8). Like RFC 1918 for IPv6.", "IPv6's private range (FD).");
+C("1.9", "1.4", "ipv6", "Link-local (LLA)", "FE80::/10: auto-configured, valid only on the local link. Used for neighbor discovery and routing.", "FE80 = this link only.");
+C("1.9", null, "ipv6", "Anycast", "One address assigned to multiple devices; traffic goes to the nearest one.", "Nearest one answers.");
+C("1.9", null, "ipv6", "Multicast (IPv6)", "FF00::/8: one-to-many delivery. IPv6 has no broadcast; it uses multicast instead.", "FF = many listeners.");
+C("1.9", "1.4", "ipv6", "Modified EUI-64", "Builds the interface ID from the MAC: split it, insert FFFE in the middle, flip the 7th bit.", "MAC + FFFE, flip the bit.");
+C("1.8", "1.4", "ipv6", "SLAAC", "Stateless Address Autoconfiguration: a host builds its own IPv6 from the router's advertised prefix.", "Self-service IPv6 addressing.");
+
+// Verify client IP: v1.1 1.10, v2.0 1.6 troubleshoot client connectivity
+C("1.10", "1.6", "verify", "ipconfig (Windows)", "Shows a Windows host's IP, mask, and gateway (ipconfig /all for DNS and MAC).", "Windows: ipconfig.");
+C("1.10", "1.6", "verify", "ifconfig / ip addr (Linux/Mac)", "Shows interface addresses on Linux/macOS (ip addr is the modern command).", "Linux/Mac: ip addr.");
+C("1.10", "1.6", "verify", "ping", "Tests reachability to another host using ICMP echo.", "Are you there?");
+C(null, "1.6", "verify", "Troubleshoot client connectivity (v2.0)", "v2.0 frames client IP as a troubleshooting task: check IP config, reachability, and wireless security parameters across OSes.", "Find why the client can't connect.");
+
+// Wireless principles: v1.1 1.11, v2.0 1.5 (adds interference causes)
+C("1.11", "1.5", "wifi", "Nonoverlapping channels (2.4 GHz)", "Channels 1, 6, and 11 don't overlap, avoiding interference in the crowded 2.4 GHz band.", "1, 6, 11.");
+C("1.11", "1.5", "wifi", "SSID", "The network name clients see and join.", "The Wi-Fi name.");
+C("1.11", "1.5", "wifi", "RF (radio frequency)", "The radio waves Wi-Fi uses; 2.4 GHz travels farther, 5 GHz is faster with less interference.", "2.4 = range, 5 = speed.");
+C("1.11", "1.5", "wifi", "Wi-Fi encryption", "Protects wireless traffic; WPA3 is current, WPA2 common, WEP/WPA are obsolete.", "Use WPA2/WPA3, never WEP.");
+C(null, "1.5", "wifi", "Causes of RF interference (v2.0)", "v2.0 explicitly covers interference sources: overlapping channels, microwaves, Bluetooth, dense APs, and physical obstructions.", "What drowns out the signal.");
+C(null, "1.5", "wifi", "Band and channel selection (v2.0)", "Choosing 2.4 vs 5 (vs 6) GHz and non-overlapping channels to minimize interference.", "Pick the right band and channel.");
+
+// Virtualization: v1.1 1.12, v2.0 1.2 (role and function)
+C("1.12", "1.2", "virt", "Server virtualization", "One physical server runs multiple virtual machines via a hypervisor, each with its own OS.", "Many VMs on one box.");
+C("1.12", "1.2", "virt", "Hypervisor", "Software that creates and runs VMs. Type 1 runs on bare metal; Type 2 runs on a host OS.", "The VM manager.");
+C("1.12", "1.2", "virt", "Containers", "Lightweight, isolated app packages that share the host OS kernel. Faster and smaller than VMs.", "Apps boxed up, sharing the OS.");
+C("1.12", null, "virt", "VRF", "Virtual Routing and Forwarding: multiple independent routing tables on one router, keeping traffic separate.", "Many routing tables, one router.");
+C(null, "1.2", "virt", "Virtual machine", "A full virtualized computer with its own OS, running on a hypervisor. v2.0 tests role and function.", "A computer inside a computer.");
+
+// Switching concepts: v1.1 only (MAC learning/flooding explanation removed as standalone in v2.0)
+C("1.13", null, "switch", "MAC learning", "A switch records the source MAC and the port it arrived on, building its MAC address table.", "Learn who's on which port.");
+C("1.13", null, "switch", "MAC aging", "Unused MAC table entries time out and are removed so the table stays current.", "Forget stale entries.");
+C("1.13", null, "switch", "Frame switching", "Forwarding a frame out the specific port where the destination MAC lives.", "Send it only where it belongs.");
+C("1.13", null, "switch", "Frame flooding", "When the destination MAC is unknown, the switch sends the frame out all ports except the source.", "Don't know? Send it everywhere.");
+C("1.13", null, "switch", "MAC address table (CAM)", "The table mapping MAC addresses to switch ports, used for forwarding decisions.", "The switch's address book.");
+C("1.13", null, "switch", "Broadcast domain", "The set of devices that receive each other's broadcasts; one per VLAN, bounded by routers.", "VLANs split it, routers bound it.");
+C("1.13", null, "switch", "Collision domain", "A segment where collisions can occur. Each switch port is its own collision domain.", "One per switch port.");
+
+// DHCP troubleshooting: v2.0 1.7 (also appears in services)
+C(null, "1.7", "dhcpts", "Troubleshoot DHCPv4 (v2.0)", "v2.0 1.7: diagnose DHCPv4 client, server, and relay problems on IOS devices, a new operational focus.", "Fix DHCP end to end.");
+C(null, "1.7", "dhcpts", "DHCP relay failure signs", "A host with a 169.254 (APIPA) address across a router points to a missing or misconfigured ip helper-address.", "APIPA across a router = relay problem.");
+
+// ====================================================================
+//  SWITCHING / NETWORK ACCESS  (v1.1 D2 / v2.0 D2, both 20-25%)
+// ====================================================================
+C("2.1", "2.1", "vlan", "VLAN", "A logical broadcast domain on a switch. Devices in different VLANs can't talk without a router/L3 switch.", "A virtual LAN inside a switch.");
+C("2.1", "2.2", "vlan", "Access port", "A switch port carrying traffic for a single VLAN, toward an end device like a PC.", "One VLAN, to a device.");
+C("2.1", "2.2", "vlan", "Voice VLAN", "A second VLAN on an access port for an IP phone, separating voice from data traffic.", "Phone traffic, kept apart.");
+C("2.1", null, "vlan", "Default VLAN", "VLAN 1, the VLAN all ports belong to by default. Best practice is to not use it for data.", "VLAN 1, avoid for real traffic.");
+C("2.1", "2.1", "vlan", "Inter-VLAN routing", "Routing between VLANs via a router (router-on-a-stick) or a Layer 3 switch (SVIs).", "A router is needed to cross VLANs.");
+C(null, "2.1", "vlan", "Switch virtual interface (SVI)", "A virtual Layer 3 interface on a switch for a VLAN, used for inter-VLAN routing and management.", "A VLAN's own routed interface.");
+C("2.2", "2.1", "trunk", "Trunk port", "A switch link that carries traffic for many VLANs at once, tagging each frame with its VLAN.", "Many VLANs on one link.");
+C("2.2", "2.1", "trunk", "802.1Q", "The standard that tags Ethernet frames with a VLAN ID so trunks can separate VLANs.", "The VLAN tag standard.");
+C("2.2", "2.1", "trunk", "Native VLAN", "The one VLAN whose frames cross a trunk untagged. Must match on both ends.", "The untagged VLAN on a trunk.");
+C("2.2", null, "trunk", "DTP", "Dynamic Trunking Protocol auto-negotiates trunks. Best practice: set mode manually and disable DTP.", "Auto-trunk; usually turn it off.");
+C("2.3", "2.3", "discovery", "CDP", "Cisco Discovery Protocol: Cisco-proprietary; shares neighbor device info (ID, platform, port, IP).", "Cisco's 'who's my neighbor'.");
+C("2.3", "2.3", "discovery", "LLDP", "Link Layer Discovery Protocol: the vendor-neutral standard equivalent of CDP.", "The open-standard CDP.");
+C(null, "2.3", "discovery", "Validate documentation (v2.0)", "v2.0 uses CDP/LLDP to confirm that network diagrams match the real wiring and neighbors.", "Does the map match reality?");
+C("2.4", "2.1", "etherchannel", "EtherChannel", "Bundles multiple physical links into one logical link for more bandwidth and redundancy.", "Many cables, one logical link.");
+C("2.4", "2.1", "etherchannel", "LACP", "Link Aggregation Control Protocol (802.3ad): the standard protocol to negotiate an EtherChannel.", "The open EtherChannel negotiator.");
+C("2.4", null, "etherchannel", "PAgP", "Port Aggregation Protocol: Cisco's proprietary EtherChannel negotiation protocol.", "Cisco's EtherChannel negotiator.");
+C("2.5", "2.5", "stp", "Spanning Tree Protocol (STP)", "Prevents Layer 2 loops by blocking redundant paths, leaving one active path.", "Stops switching loops.");
+C("2.5", "2.5", "stp", "Rapid PVST+", "Cisco's per-VLAN Rapid STP: faster convergence than classic STP, one instance per VLAN.", "Fast STP, per VLAN.");
+C("2.5", "2.5", "stp", "Root bridge", "The switch elected as the reference point of the spanning tree, chosen by lowest bridge ID.", "The top of the tree.");
+C("2.5", "2.5", "stp", "Bridge ID", "Priority plus MAC address; lowest wins the root election. Lower priority = more likely root.", "Priority + MAC; lowest wins.");
+C("2.5", "2.5", "stp", "Root port", "On a non-root switch, the one port with the best path back to the root bridge.", "The way home to root.");
+C("2.5", "2.5", "stp", "Designated port", "The forwarding port on each segment with the best path to root; one per segment.", "The segment's forwarder.");
+C("2.5", "2.5", "stp", "RSTP port states", "Discarding, Learning, Forwarding. (Classic STP added Blocking and Listening.)", "Discard, learn, forward.");
+C("2.5", "2.5", "stp", "PortFast", "Puts an access port straight into forwarding, skipping STP delay. Only for end-device ports.", "Instant forwarding for host ports.");
+C("2.5", "2.5", "stp", "BPDU Guard", "Shuts a PortFast port down if it receives a BPDU, protecting against rogue switches.", "A BPDU here? Shut it down.");
+C("2.5", "2.5", "stp", "Root Guard", "Prevents a port from becoming root, protecting the chosen root bridge's position.", "You shall not become root.");
+C("2.5", "2.5", "stp", "Loop Guard", "Stops a blocking port from wrongly moving to forwarding if BPDUs stop arriving.", "Guards against silent loops.");
+C("2.5", null, "stp", "BPDU Filter", "Suppresses sending/receiving BPDUs on a port. On the v1.1 blueprint; removed from v2.0's guard list.", "Mutes BPDUs (v1.1 topic).");
+C("2.6", "2.2", "wireless", "Autonomous AP", "A standalone AP configured individually, with no controller.", "A solo, self-managed AP.");
+C("2.6", "2.2", "wireless", "Lightweight AP", "An AP managed by a WLC, which handles its configuration and control.", "A controller-managed AP.");
+C("2.6", null, "wireless", "AP modes", "Local (normal client service), Monitor, Sniffer, FlexConnect, Bridge, and more.", "Different jobs for an AP.");
+C("2.6", null, "wireless", "CAPWAP", "The tunnel protocol between a lightweight AP and its WLC for control and data.", "The AP-to-WLC tunnel.");
+C("2.6", "2.2", "wireless", "Standalone vs controller-based AP", "v2.0 frames APs as edge hosts to connect: standalone APs stand alone; controller-based APs register to a WLC.", "Solo AP vs controller-managed.");
+C("2.7", null, "wireless", "LAG (wireless)", "Link Aggregation bundling a WLC's ports for bandwidth and redundancy.", "Bundled WLC uplinks.");
+C("2.7", null, "wireless", "WLC port types", "APs connect to access/trunk ports; the WLC connects to the wired network to reach controllers and services.", "How the WLC and APs wire in.");
+C("2.8", "4.1", "mgmt", "Console access", "Direct physical management via the console port; always works, even with no network.", "The physical back door in.");
+C("2.8", "4.2", "mgmt", "Telnet vs SSH", "Both give remote CLI access; Telnet is cleartext (insecure), SSH is encrypted. Use SSH.", "Telnet plain, SSH encrypted.");
+C("2.8", null, "mgmt", "HTTP vs HTTPS (mgmt)", "Web management; HTTPS encrypts it, HTTP does not.", "Use HTTPS for the web UI.");
+C("2.8", "4.1", "mgmt", "TACACS+ vs RADIUS", "AAA servers. TACACS+ (Cisco) separates AAA and encrypts the whole packet; RADIUS is an open standard, often for network access.", "TACACS+ Cisco/full encrypt; RADIUS open.");
+C("2.8", "5.3", "mgmt", "Cloud-managed", "Devices managed from a cloud dashboard (e.g. Meraki) instead of per-device CLI.", "Manage from the cloud.");
+C("2.9", null, "wlangui", "WLAN creation (GUI)", "In the WLC GUI you create a WLAN, map it to an SSID and VLAN/interface, and enable it.", "Make the SSID in the GUI.");
+C("2.9", null, "wlangui", "WLAN security settings", "GUI options for WPA2/WPA3, PSK or 802.1X, and encryption for the WLAN.", "Set the Wi-Fi lock in the GUI.");
+C("2.9", null, "wlangui", "QoS profile (WLAN)", "GUI setting prioritizing certain wireless traffic (e.g. voice) over others.", "Prioritize traffic in the GUI.");
+C(null, "2.4", "tshoot", "show commands", "v2.0 2.4: read show command output (including show logging) to find Layer 2/3 problems.", "The output tells the story.");
+C(null, "2.4", "tshoot", "ping and extended ping", "Basic reachability test; extended ping sets source, size, and repeat count for deeper testing.", "Test reachability, simply or in detail.");
+C(null, "2.4", "tshoot", "traceroute", "Shows the hop-by-hop path to a destination, revealing where traffic stops.", "See every hop to the target.");
+C(null, "2.4", "tshoot", "Packet capture output", "v2.0 adds reading packet capture output to diagnose connectivity and device operation.", "Read the packets to find the fault.");
+
+// ====================================================================
+//  IP ROUTING  (v1.1 D3 IP Connectivity 25% / v2.0 D3 IP Routing 20%)
+// ====================================================================
+C("3.1", "3.1", "routetable", "Routing table", "The router's map of known networks and how to reach them. Built from connected, static, and dynamic routes.", "The router's road map.");
+C("3.1", "3.1", "routetable", "Routing protocol code", "The letter in a route entry showing its source: C connected, S static, O OSPF, D EIGRP.", "C, S, O, D: where it came from.");
+C("3.1", "3.1", "routetable", "Prefix and mask", "The destination network and how many bits identify it (e.g. 10.1.1.0/24).", "Which network, how big.");
+C("3.1", "3.1", "routetable", "Next hop", "The IP address of the next router to send the packet to.", "Who to hand it to next.");
+C("3.1", "3.1", "routetable", "Administrative distance (AD)", "Trustworthiness of a route source; lower is preferred. Connected 0, static 1, OSPF 110, EIGRP 90, RIP 120.", "Lower AD, more trusted.");
+C("3.1", "3.1", "routetable", "Metric", "A protocol's measure of how good a route is; lower is better. Used to pick among routes from the same protocol.", "The tiebreaker within a protocol.");
+C("3.1", "3.1", "routetable", "Gateway of last resort", "The default route used when no specific route matches (0.0.0.0/0).", "When all else fails, go here.");
+C("3.2", "3.1", "forwarding", "Longest prefix match", "A router picks the most specific matching route (longest mask) first.", "Most specific route wins.");
+C("3.2", "3.1", "forwarding", "Route selection order", "1) Longest prefix match, then 2) lowest administrative distance, then 3) lowest metric.", "Prefix, then AD, then metric.");
+C("3.3", "3.2", "static", "Static route", "A manually configured route. Reliable and low-overhead but doesn't adapt to changes.", "Routes you set by hand.");
+C("3.3", "3.2", "static", "Default route", "0.0.0.0/0: matches any destination, used to send unknown traffic toward the internet.", "The catch-all route.");
+C("3.3", "3.2", "static", "Network route", "A static route to a specific network/prefix.", "A route to one network.");
+C("3.3", "3.2", "static", "Host route", "A /32 (IPv4) or /128 (IPv6) route to a single specific host.", "A route to just one host.");
+C("3.3", "3.2", "static", "Floating static route", "A backup static route with a higher AD, used only if the primary route fails.", "The understudy route.");
+C("3.3", "3.2", "static", "Next hop vs exit interface", "A static route can point to a next-hop IP, an exit interface, or both.", "Who to send to, or out which door.");
+C(null, "3.2", "static", "Troubleshoot static routing (v2.0)", "v2.0 shifts static routing from configure to troubleshoot: find why a default, network, host, or floating route isn't working.", "Fix the route, don't just build it.");
+C("3.4", "3.3", "ospf", "OSPF", "Open Shortest Path First: an open-standard link-state routing protocol using cost as its metric.", "Link-state, open standard.");
+C("3.4", "3.3", "ospf", "OSPF cost", "OSPF's metric, based on interface bandwidth; lower cost is preferred.", "Lower cost, better path.");
+C("3.4", "3.3", "ospf", "OSPF neighbor adjacency", "Routers must agree on area, timers, subnet, and more to form an adjacency and exchange routes.", "Become neighbors, then share.");
+C("3.4", "3.3", "ospf", "OSPF router ID", "A 32-bit ID (looks like an IP) identifying the router; highest loopback IP is preferred, else highest active interface.", "The router's OSPF name tag.");
+C("3.4", "3.3", "ospf", "DR and BDR", "On broadcast/multiaccess networks, a Designated Router (and Backup) reduce adjacencies. Elected by highest priority, then highest router ID.", "One leader per broadcast segment.");
+C("3.4", "3.3", "ospf", "OSPF point-to-point", "On a point-to-point link, no DR/BDR is elected; the two routers just peer directly.", "Two routers, no election.");
+C("3.4", "3.3", "ospf", "OSPF hello and dead timers", "Hellos maintain the neighbor relationship; if none arrive within the dead interval, the neighbor is declared down. Must match.", "Say hello, or you're declared dead.");
+C("3.4", "3.3", "ospf", "OSPF areas", "OSPF divides a domain into areas to scale; all areas connect to backbone area 0.", "Everything connects to area 0.");
+C(null, "3.3", "ospf", "OSPFv3 for IPv6", "v2.0 adds OSPFv3: the version of OSPF that routes IPv6 (alongside OSPFv2 for IPv4).", "OSPF for IPv6.");
+C("3.5", "3.4", "fhrp", "First Hop Redundancy Protocol (FHRP)", "Lets multiple routers share one virtual gateway IP so hosts keep a working default gateway if one router fails.", "A backup default gateway.");
+C("3.5", "3.4", "fhrp", "HSRP", "Cisco's FHRP: an active router handles traffic, a standby takes over on failure, sharing a virtual IP/MAC.", "Cisco: active + standby gateway.");
+C("3.5", "3.4", "fhrp", "VRRP", "The open-standard FHRP equivalent of HSRP (master and backup routers).", "The open-standard HSRP.");
+C("3.5", null, "fhrp", "GLBP", "Cisco's FHRP that also load-balances across multiple routers, not just failover.", "Cisco FHRP with load balancing.");
+C(null, "3.4", "fhrp", "Interpret FHRP status (v2.0)", "v2.0 3.4: read HSRP/VRRP operational state (active/standby or master/backup, priority, preemption) rather than configure it.", "Read who's active and why.");
+
+// ====================================================================
+//  NETWORK SERVICES & SECURITY
+//  v1.1: D4 IP Services (10%) + D5 Security (15%)
+//  v2.0: D4 Network Services and Security (20%)
+// ====================================================================
+// NAT
+C("4.1", "4.3", "nat", "NAT", "Network Address Translation: maps private IPs to public IPs so internal hosts can reach the internet.", "Private IPs, public face.");
+C("4.1", "4.3", "nat", "Static NAT", "A fixed one-to-one mapping between an inside and an outside address.", "One private = one public, always.");
+C("4.1", "4.3", "nat", "Dynamic NAT (pool)", "Maps inside addresses to public addresses drawn from a pool, as needed.", "Borrow from a pool of publics.");
+C("4.1", "4.3", "nat", "PAT (NAT overload)", "Many inside hosts share one public IP, distinguished by port number. The home-router default.", "Many hosts, one IP, by port.");
+C("4.1", "4.3", "nat", "Inside local vs inside global", "Inside local is the private address; inside global is the translated public address.", "Local = private, global = public.");
+// NTP: v1.1 only (trimmed from v2.0)
+C("4.2", null, "ntp", "NTP", "Network Time Protocol: synchronizes device clocks, vital for accurate logs and certificates.", "Keeps every clock in sync.");
+C("4.2", null, "ntp", "NTP client/server mode", "A device syncs from an NTP server (client) and can serve time to others (server).", "Get time, give time.");
+C("4.2", null, "ntp", "NTP stratum", "Distance from the authoritative time source; lower stratum is more accurate.", "Lower stratum, closer to source.");
+// DHCP/DNS
+C("4.3", null, "dhcpdns", "DHCP", "Dynamic Host Configuration Protocol: automatically assigns IP, mask, gateway, and DNS to clients.", "Hands out IP settings.");
+C("4.3", "1.7", "dhcpdns", "DHCP DORA", "The lease process: Discover, Offer, Request, Acknowledge.", "Discover, Offer, Request, Ack.");
+C("4.3", "4.4", "dhcpdns", "DNS", "Domain Name System: resolves names (www.example.com) to IP addresses.", "The internet's phone book.");
+C("4.6", "1.7", "dhcpdns", "DHCP relay (ip helper-address)", "Forwards DHCP broadcasts across subnets to a central DHCP server, since broadcasts don't cross routers.", "Relays DHCP across subnets.");
+C("4.6", "1.7", "dhcpdns", "DHCP client", "A device configured to obtain its IP settings automatically from a DHCP server.", "Asks for its address.");
+// DNS records: v2.0 adds explicit record-type diagnosis
+C(null, "4.4", "dns", "DNS A and AAAA records", "A maps a name to an IPv4 address; AAAA maps a name to an IPv6 address.", "A = IPv4, AAAA = IPv6.");
+C(null, "4.4", "dns", "DNS CNAME record", "An alias pointing one name to another name.", "A nickname for another name.");
+C(null, "4.4", "dns", "DNS MX record", "Directs mail to a domain's mail servers, with priority values.", "Where email goes.");
+C(null, "4.4", "dns", "DNS NS record", "Names the authoritative name servers for a domain.", "Who's in charge of this zone.");
+C(null, "4.4", "dns", "DNS PTR record", "Reverse lookup: maps an IP back to a name.", "IP back to name.");
+C(null, "4.4", "dns", "Diagnose DNS issues (v2.0)", "v2.0 4.4: match symptoms (web or mail fails by name) to the broken record type.", "Name won't resolve? Check the record.");
+// SNMP/syslog: v1.1 IP Services; v2.0 moves to AI/Ops domain (see pack5)
+C("4.4", null, "mon", "SNMP (v1.1)", "Simple Network Management Protocol: monitors and manages devices. Use v3 for authentication and encryption. (In v2.0 this sits in the Operations domain.)", "Monitor and manage devices.");
+C("4.4", null, "mon", "SNMP components", "Manager (NMS), agent (on the device), and MIB (the data definitions). Traps are device-initiated alerts.", "Manager, agent, MIB, traps.");
+C("4.5", null, "mon", "Syslog (v1.1)", "A standard for sending log messages to a central server. (In v2.0 this sits in the Operations domain.)", "Central logging.");
+C("4.5", null, "mon", "Syslog severity levels", "0 Emergency to 7 Debug; lower numbers are more severe.", "0 worst, 7 chattiest.");
+C("4.5", null, "mon", "Syslog facility", "A code indicating which part of the system generated the message.", "Which subsystem spoke.");
+// QoS: v1.1 only (removed from v2.0)
+C("4.7", null, "qos", "QoS", "Quality of Service: prioritizes important traffic (voice, video) when the network is congested. Removed from the v2.0 blueprint.", "Important traffic goes first.");
+C("4.7", null, "qos", "Classification and marking", "Classification identifies traffic; marking tags it (DSCP/CoS) so other devices honor its priority.", "Identify it, then label it.");
+C("4.7", null, "qos", "Policing vs shaping", "Policing drops/remarks traffic over a limit; shaping buffers and delays it to smooth the rate.", "Policing drops, shaping delays.");
+// Secure management / file transfer
+C("4.8", "4.2", "remote", "SSH configuration", "Enable SSH with a hostname, domain name, RSA keys, a local user, and vty lines set to SSH.", "Keys + user + vty = SSH.");
+C("4.9", null, "filexfer", "TFTP (v1.1)", "Trivial FTP: simple, UDP-based, no authentication. Used for IOS images and config backups.", "Simple, no login, UDP.");
+C("4.9", null, "filexfer", "FTP (v1.1)", "File Transfer Protocol: TCP-based with authentication; more capable than TFTP.", "Fuller featured, has login.");
+C(null, "4.2", "filexfer", "SFTP / SCP (v2.0)", "v2.0 replaces plain TFTP/FTP with secure transfer: SFTP and SCP encrypt config and image file transfers.", "Encrypted file transfer.");
+C(null, "4.1", "mgmt2", "Local usernames + AAA client (v2.0)", "v2.0 4.1: configure local usernames and point the device at TACACS+/RADIUS for management logins.", "Local backup plus central AAA.");
+// Security concepts: v1.1 only (as standalone concept cards)
+C("5.1", null, "secconcept", "Threat", "A potential danger that could exploit a vulnerability to cause harm.", "What could go wrong.");
+C("5.1", null, "secconcept", "Vulnerability", "A weakness in a system that a threat could exploit.", "The weak spot.");
+C("5.1", null, "secconcept", "Exploit", "The method or code that takes advantage of a vulnerability.", "The attack that uses the weakness.");
+C("5.1", null, "secconcept", "Mitigation technique", "A control that reduces risk: patching, segmentation, hardening, ACLs, and more.", "The way you reduce the risk.");
+C("5.2", null, "secprog", "Security awareness and training", "Teaching users to recognize threats like phishing; people are the first line of defense.", "Train the humans.");
+C("5.2", null, "secprog", "Physical access control", "Locks, badges, and barriers that keep unauthorized people away from equipment.", "Keep bodies away from gear.");
+C("5.3", "4.1", "devaccess", "Enable secret", "Sets an encrypted password to enter privileged EXEC mode. Preferred over 'enable password'.", "Encrypted privileged-mode password.");
+C("5.3", "4.1", "devaccess", "Line passwords", "Passwords on console and vty lines controlling local and remote CLI access.", "Lock the console and vty lines.");
+C("5.3", null, "devaccess", "service password-encryption", "Obscures plaintext passwords in the running config (weak, but better than nothing).", "Hide cleartext passwords.");
+C("5.4", null, "secpolicy", "Password complexity", "Requiring length and a mix of character types to resist guessing; length matters most.", "Long and varied beats short and clever.");
+C("5.4", null, "secpolicy", "Multifactor authentication (MFA)", "Requires two or more factors: something you know, have, or are.", "More than just a password.");
+C("5.4", null, "secpolicy", "Certificates (auth)", "Digital certificates authenticate devices or users without a shared password.", "Prove identity with a cert.");
+C("5.4", null, "secpolicy", "Biometrics", "Authentication by a physical trait: fingerprint, face, or iris.", "Something you are.");
+// VPNs
+C("5.5", "4.5", "vpn", "IPsec", "A suite that encrypts and authenticates IP traffic, the basis of secure VPNs.", "Encrypts IP, powers VPNs.");
+C("5.5", "4.5", "vpn", "Site-to-site VPN", "A permanent encrypted tunnel connecting two whole networks, usually router-to-router.", "Office-to-office tunnel.");
+C("5.5", "4.5", "vpn", "Remote-access VPN", "An on-demand encrypted tunnel for an individual user's device to reach the network.", "One user dialing in securely.");
+C(null, "4.5", "vpn", "IPsec transport vs tunnel mode", "Transport mode encrypts only the payload; tunnel mode encrypts the whole original packet. v2.0 names transport modes.", "Payload only, or the whole packet.");
+// ACLs
+C("5.6", "4.6", "acl", "Access Control List (ACL)", "An ordered list of permit/deny rules filtering traffic by address, protocol, or port.", "Traffic's permit/deny list.");
+C("5.6", "4.6", "acl", "Standard ACL", "Filters by source IP only. Numbered 1-99. Place close to the destination.", "Source only; near destination.");
+C("5.6", "4.6", "acl", "Extended ACL", "Filters by source, destination, protocol, and port. Numbered 100-199. Place close to the source.", "Full detail; near source.");
+C("5.6", "4.6", "acl", "Named ACL", "An ACL referenced by name instead of number, easier to read and edit.", "An ACL with a name.");
+C("5.6", "4.6", "acl", "Implicit deny", "Every ACL ends with an invisible 'deny all'. Anything not permitted is dropped.", "Not permitted = denied.");
+C("5.6", "4.6", "acl", "ACL order matters", "Rules are read top-down; the first match wins, so specific rules go first.", "First match wins, top-down.");
+// Layer 2 security
+C("5.7", "4.7", "l2sec", "Port security", "Limits which/how many MAC addresses a switch port allows, reacting to violations.", "Lock a port to known MACs.");
+C("5.7", "4.7", "l2sec", "DHCP snooping", "Blocks rogue DHCP servers by trusting only approved ports.", "Stops fake DHCP servers.");
+C("5.7", "4.7", "l2sec", "Dynamic ARP Inspection (DAI)", "Blocks ARP spoofing by validating ARP packets against the DHCP snooping table.", "Stops ARP poisoning.");
+C("5.7", "4.7", "l2sec", "Port security violation modes", "Protect (drop silently), Restrict (drop + log), Shutdown (err-disable the port, the default).", "Protect, restrict, shutdown.");
+C(null, "4.7", "l2sec", "Storm control (v2.0)", "Limits broadcast/multicast/unknown-unicast traffic on a port to prevent storms.", "Caps traffic floods on a port.");
+C(null, "4.7", "l2sec", "RA guard (v2.0)", "Router Advertisement guard blocks rogue IPv6 RA messages from unauthorized ports.", "Stops fake IPv6 routers.");
+// AAA
+C("5.8", "4.1", "aaa", "Authentication", "Verifying who you are (login credentials).", "Who are you?");
+C("5.8", "4.1", "aaa", "Authorization", "Determining what you're allowed to do once authenticated.", "What may you do?");
+C("5.8", "4.1", "aaa", "Accounting", "Recording what you did: commands run, time connected, resources used.", "What did you do?");
+C("5.8", "4.1", "aaa", "AAA server protocols", "RADIUS and TACACS+ carry AAA between devices and a central server.", "RADIUS and TACACS+ do the AAA talking.");
+// Wireless security
+C("5.9", "1.5", "wifisec", "WPA", "Wi-Fi Protected Access: the original, now obsolete; replaced WEP.", "Old, don't use.");
+C("5.9", "1.5", "wifisec", "WPA2", "Uses AES/CCMP encryption; the long-standing standard, still common.", "AES, the common standard.");
+C("5.9", "1.5", "wifisec", "WPA3", "The current standard: stronger encryption (SAE/GCMP) and protection against offline cracking.", "Newest and strongest.");
+C("5.10", null, "wifisec", "WPA2 PSK", "Pre-Shared Key mode: all clients use one shared Wi-Fi password. Configured in the WLC GUI.", "One shared Wi-Fi password.");
+C("4.7", null, "qos", "Congestion management (queuing)", "How a device orders packets when a link is busy, letting high-priority traffic go first. A v1.1 QoS topic.", "The priority waiting line.");
+
+// ====================================================================
+//  v1.1 D6 AUTOMATION & PROGRAMMABILITY  /  v2.0 D5 AI, NETWORK OPS & MGMT
+// ====================================================================
+// Automation impact / management approaches
+C("6.1", "5.3", "auto", "Network automation", "Using software to configure, manage, and test networks, reducing manual errors and effort.", "Let software do the config.");
+C("6.1", "5.3", "auto", "Benefits of automation", "Consistency, speed, fewer human errors, and scalability.", "Faster, consistent, scalable.");
+C("6.2", "5.3", "sdn", "Traditional networking", "Each device has its own control and data plane and is configured individually via CLI.", "Box-by-box, by hand.");
+C("6.2", "5.3", "sdn", "Controller-based networking", "A central controller programs many devices, centralizing the control plane.", "One brain programs many devices.");
+C(null, "5.3", "ops", "Network management approaches (v2.0)", "v2.0 5.3 names five: device-based, cloud-based, controller-based, automation-based, and infrastructure as code.", "Five ways to run a network.");
+C(null, "5.3", "ops", "Device-based management", "Managing each device directly via its CLI or GUI. Simple but doesn't scale.", "One box at a time.");
+C(null, "5.3", "ops", "Cloud-based management", "Managing devices through a cloud dashboard (e.g. Meraki).", "Run it from the cloud.");
+C(null, "5.3", "ops", "Controller-based management", "A central controller (e.g. Catalyst Center) programs and monitors the network.", "One controller, many devices.");
+C(null, "5.3", "ops", "Infrastructure as code (IaC)", "Defining network/infrastructure config in version-controlled files, applied automatically.", "Config as code in a repo.");
+// SDN architecture: v1.1 explicit; v2.0 folds into management approaches
+C("6.3", null, "sdn", "Control plane vs data plane", "Control plane makes forwarding decisions (routing); data plane moves the actual packets.", "Brain decides, muscle forwards.");
+C("6.3", null, "sdn", "SDN", "Software-Defined Networking: separates the control plane into a central controller that programs devices.", "Central brain, programmable network.");
+C("6.3", null, "sdn", "Underlay", "The physical network of real devices and links beneath an overlay.", "The real wires underneath.");
+C("6.3", null, "sdn", "Overlay", "A virtual network (tunnels like VXLAN) built on top of the underlay.", "The virtual net on top.");
+C("6.3", null, "sdn", "Fabric", "The combination of underlay plus overlay managed as one system (e.g. SD-Access).", "Underlay + overlay as one.");
+C("6.3", null, "sdn", "Northbound API", "Connects the controller up to apps/scripts (often REST), letting them program the network.", "Up to the apps.");
+C("6.3", null, "sdn", "Southbound API", "Connects the controller down to the devices to push configuration (e.g. NETCONF, OpenFlow).", "Down to the devices.");
+// AI: v1.1 has light AI/ML awareness; v2.0 makes it a domain with agentic AI + prompting
+C("6.4", "5.1", "ai", "AI in network operations", "Using AI to monitor, analyze, and help run networks: anomaly detection, insights, and assistance.", "AI helps run the network.");
+C("6.4", null, "ai", "Predictive AI (v1.1)", "Uses historical data to forecast issues: anomaly detection, capacity planning, failure prediction.", "Foresee problems.");
+C("6.4", null, "ai", "Generative AI (v1.1)", "Creates content from prompts: config snippets, documentation, or query answers.", "Creates configs and text.");
+C("6.4", null, "ai", "Machine learning in operations (v1.1)", "Systems learn normal behavior to flag anomalies and automate responses.", "Learns normal, flags weird.");
+C(null, "5.1", "ai", "Agentic AI (v2.0)", "AI that can take actions and run multi-step tasks in network operations, not just answer questions. You may evaluate its recommendations.", "AI that acts, and that you check.");
+C(null, "5.1", "ai", "Digital network assistant (v2.0)", "An AI assistant that supports operations and troubleshooting; the exam may ask you to judge its output.", "An AI co-pilot for the network.");
+C(null, "5.2", "ai", "Prompt engineering (v2.0)", "Choosing a good prompt for a generative AI system to support network tasks.", "Ask the AI the right way.");
+C(null, "5.2", "ai", "Prompt components (v2.0)", "A good prompt considers data classification, output format, persona, and clear instructions.", "Classify, format, persona, instruct.");
+C(null, "5.2", "ai", "Data classification in prompts (v2.0)", "Don't paste sensitive/confidential data into AI prompts; classify data before sharing it.", "Mind what you feed the AI.");
+C(null, "5.2", "ai", "Responsible AI use (v2.0)", "Verify AI output before acting; AI can be confidently wrong (hallucinate).", "Trust, but verify the AI.");
+// SNMP + syslog live in v2.0 Operations domain (and v1.1 Services, carded in pack4)
+C(null, "5.4", "ops", "SNMP (v2.0 Operations)", "v2.0 5.4: describe SNMP's function in operations: polling, traps, and the manager/agent/MIB model.", "Monitor devices centrally.");
+C(null, "5.6", "ops", "Syslog (v2.0 Operations)", "v2.0 5.6: interpret syslog message content, severity levels (0-7), and facilities.", "Read the logs correctly.");
+// REST / JSON: v1.1 explicit; concepts still useful for v2.0 IaC/automation
+C("6.5", null, "rest", "REST API", "A web API using HTTP to let software read and change system data over the network.", "Software talking over HTTP.");
+C("6.5", null, "rest", "HTTP verbs (CRUD)", "GET reads, POST creates, PUT/PATCH updates, DELETE removes. CRUD = Create, Read, Update, Delete.", "GET/POST/PUT/DELETE = CRUD.");
+C("6.5", null, "rest", "REST authentication", "How an API verifies the caller: API keys, tokens, or basic auth.", "Prove you may call the API.");
+C("6.5", null, "rest", "HTTP status codes", "2xx success, 4xx client error (401 unauthorized, 404 not found), 5xx server error.", "2xx good, 4xx your fault, 5xx theirs.");
+C("6.5", null, "rest", "Data encoding (API)", "Structured formats APIs exchange: JSON (most common), XML, YAML.", "JSON, XML, YAML.");
+// Config management
+C("6.6", "5.5", "cfgmgmt", "Ansible", "An agentless config management tool using YAML playbooks, pushed over SSH.", "Agentless, YAML, push.");
+C("6.6", null, "cfgmgmt", "Terraform", "Infrastructure-as-code tool that provisions resources from declarative files.", "Declare it, Terraform builds it.");
+C("6.6", "5.5", "cfgmgmt", "Agent vs agentless", "Agent-based tools need software on each device; agentless (like Ansible) connect over SSH/API.", "Install software, or just connect.");
+C(null, "5.5", "cfgmgmt", "Ansible playbook (v2.0)", "v2.0 5.5: use Ansible to execute commands across devices via a YAML playbook.", "Run commands fleet-wide with Ansible.");
+// JSON: v1.1 explicit
+C("6.7", null, "json", "JSON", "JavaScript Object Notation: a lightweight, human-readable data format of key/value pairs.", "Key/value data, readable.");
+C("6.7", null, "json", "JSON structure", "Objects in { } hold key:value pairs; arrays in [ ] hold ordered lists.", "Curly = object, square = array.");
+C("6.7", null, "json", "JSON syntax rules", "Keys are quoted strings; pairs separated by commas; no trailing comma.", "Quote keys, mind the commas.");
+
+// ====================================================================
+//  EXAM-STYLE QUESTIONS
+// ====================================================================
+function TAGS(o11, o20){ const x={}; if(o11)x.v11=o11; if(o20)x.v20=o20; return x; }
+function Q(o11, o20, q, c, a, e) { PACK.mcq.push({ x: TAGS(o11,o20), q, c, a, e }); }
+
+// Domain 1
+Q("1.1", null, "A company needs to route traffic between three different IP networks. Which device is designed for this?", ["Layer 2 switch", "Router", "Hub", "Access point"], 1, "Routers forward packets between different IP networks using Layer 3 addresses.");
+Q("1.1", null, "Which technology delivers both power and data to an access point over a single Ethernet cable?", ["USB", "PoE", "SFP", "Console"], 1, "Power over Ethernet carries electrical power alongside data on the same cable.");
+Q("1.5", null, "An application needs fast, low-overhead delivery and can tolerate some loss, such as live video. Which transport protocol fits best?", ["TCP", "UDP", "ICMP", "ARP"], 1, "UDP is connectionless with no retransmission, making it ideal for real-time traffic that values speed over reliability.");
+Q("1.5", null, "Which sequence correctly describes the TCP three-way handshake?", ["ACK, SYN, SYN-ACK", "SYN, SYN-ACK, ACK", "SYN, ACK, FIN", "SYN-ACK, SYN, ACK"], 1, "TCP sets up a connection with SYN, then SYN-ACK, then ACK.");
+Q("1.7", "1.3", "Which address is a private IPv4 address per RFC 1918?", ["172.33.1.1", "192.168.5.20", "11.0.0.1", "169.254.1.1"], 1, "192.168.0.0/16 is private. 172 is only private in 16-31, 11.x is public, and 169.254 is APIPA.");
+Q("1.7", "1.3", "A PC shows an IP of 169.254.12.5. What does this most likely indicate?", ["It has a valid public IP", "DHCP failed and APIPA was assigned", "It is using IPv6", "The gateway is down"], 1, "169.254.0.0/16 is APIPA, auto-assigned when a host cannot reach a DHCP server.");
+Q("1.9", "1.4", "Which IPv6 address type begins with FE80 and is valid only on the local link?", ["Global unicast", "Unique local", "Link-local", "Anycast"], 2, "Link-local addresses (FE80::/10) are auto-configured and used only on the local segment.");
+Q("1.13", null, "A switch receives a frame for a destination MAC not in its table. What does it do?", ["Drops the frame", "Floods it out all ports except the one it arrived on", "Sends it to the default gateway", "Returns it to the sender"], 1, "With an unknown unicast destination, the switch floods the frame out all other ports.");
+Q("1.12", "1.2", "Which technology runs isolated applications that share the host operating system's kernel?", ["Virtual machines", "Containers", "VRFs", "Hypervisors"], 1, "Containers share the host OS kernel, making them lighter than full VMs.");
+
+// Domain 2
+Q("2.1", "2.1", "Two PCs are in different VLANs on the same switch and cannot communicate. What is required?", ["A crossover cable", "A router or Layer 3 switch for inter-VLAN routing", "A longer DHCP lease", "Port security"], 1, "Devices in different VLANs need a Layer 3 device to route between them.");
+Q("2.2", "2.1", "A link must carry traffic for multiple VLANs between two switches. What should it be configured as?", ["An access port", "A trunk port", "A voice port", "A routed port"], 1, "Trunk ports carry multiple VLANs, tagging frames with 802.1Q.");
+Q("2.2", "2.1", "On an 802.1Q trunk, which VLAN's frames are sent untagged?", ["VLAN 1 always", "The native VLAN", "The highest VLAN", "The voice VLAN"], 1, "The native VLAN crosses a trunk untagged and must match on both ends.");
+Q("2.5", "2.5", "Which STP feature immediately transitions an access port to forwarding for an end device?", ["BPDU Guard", "PortFast", "Root Guard", "Loop Guard"], 1, "PortFast skips the STP listening/learning delay on edge ports connected to end devices.");
+Q("2.5", "2.5", "How is the STP root bridge elected?", ["Highest IP address", "Lowest bridge ID (priority then MAC)", "Highest MAC address", "First switch powered on"], 1, "The switch with the lowest bridge ID (priority, then MAC) becomes root.");
+Q("2.5", "2.5", "A PortFast-enabled access port receives a BPDU. With BPDU Guard enabled, what happens?", ["The port becomes root", "The port is err-disabled (shut down)", "Nothing", "The BPDU is forwarded"], 1, "BPDU Guard disables a PortFast port that receives a BPDU, preventing rogue-switch loops.");
+Q("2.3", "2.3", "Which protocol is the vendor-neutral equivalent of Cisco Discovery Protocol?", ["LLDP", "DTP", "VTP", "LACP"], 0, "LLDP is the open-standard neighbor discovery protocol; CDP is Cisco-proprietary.");
+Q("2.8", "4.1", "Which remote management protocol should be used instead of Telnet, and why?", ["HTTP, because it is faster", "SSH, because it encrypts the session", "Telnet is fine", "Console, because it is remote"], 1, "SSH encrypts management traffic; Telnet sends everything, including passwords, in cleartext.");
+
+// Domain 3
+Q("3.1", "3.1", "In a routing table, which value represents the trustworthiness of a route's source?", ["Metric", "Administrative distance", "Prefix length", "Next hop"], 1, "Administrative distance rates how trusted a route source is; lower is preferred.");
+Q("3.2", "3.1", "A router has routes to 10.1.1.0/24 and 10.1.1.0/26 for a packet to 10.1.1.70. Which is used?", ["The /24, lower AD", "The /26, longest prefix match", "Both, load-balanced", "Neither"], 1, "Routers choose the most specific (longest prefix) matching route first; .70 falls in the /26.");
+Q("3.2", "3.1", "What is the correct order a router uses to choose a route?", ["Metric, AD, prefix", "Longest prefix match, then AD, then metric", "AD, then metric, then prefix", "Random"], 1, "First longest prefix match, then lowest administrative distance, then lowest metric.");
+Q("3.3", "3.2", "Which route is used only when its primary route fails, because it has a higher administrative distance?", ["Default route", "Floating static route", "Host route", "Connected route"], 1, "A floating static route has a raised AD so it stays inactive until the preferred route is gone.");
+Q("3.3", "3.2", "Which destination represents a default route?", ["255.255.255.255/32", "0.0.0.0/0", "127.0.0.1/8", "10.0.0.0/8"], 1, "0.0.0.0/0 matches all destinations and is the default (gateway of last resort).");
+Q("3.4", "3.3", "Two OSPF routers on an Ethernet segment won't form an adjacency. Which mismatch could cause this?", ["Different hostnames", "Mismatched hello/dead timers or area", "Different serial numbers", "Different models"], 1, "OSPF neighbors must agree on area, subnet, and timers (among others) to form an adjacency.");
+Q("3.4", "3.3", "On an OSPF broadcast network, what is the role of the DR?", ["It blocks all traffic", "It reduces adjacencies by being the central point for LSA exchange", "It replaces the router ID", "It sets the AD"], 1, "The Designated Router centralizes LSA exchange so routers don't all fully peer with each other.");
+Q("3.4", "3.3", "How does OSPF choose its router ID if no router-id is configured and loopbacks exist?", ["Lowest interface IP", "Highest loopback IP address", "The MAC address", "Always 0.0.0.0"], 1, "OSPF prefers the highest loopback IP, then the highest active interface IP, unless set manually.");
+Q("3.5", "3.4", "What problem do first hop redundancy protocols solve?", ["Slow DNS", "A single default gateway being a point of failure", "Weak Wi-Fi", "Duplicate IPs"], 1, "FHRPs like HSRP provide a redundant virtual gateway so hosts aren't stranded if one router fails.");
+
+// Domain 4
+Q("4.1", "4.3", "Many internal hosts share one public IP, distinguished by port number. What is this?", ["Static NAT", "Dynamic NAT", "PAT (NAT overload)", "DNS"], 2, "PAT maps many inside hosts to one public address using unique port numbers.");
+Q("4.3", "4.4", "What is the correct order of the DHCP lease process?", ["Request, Offer, Discover, Ack", "Discover, Offer, Request, Acknowledge", "Offer, Discover, Ack, Request", "Discover, Request, Offer, Ack"], 1, "DHCP follows DORA: Discover, Offer, Request, Acknowledge.");
+Q("4.6", "1.7", "Clients on a subnet with no local DHCP server need addresses from a central server. What is configured on the router?", ["ip default-gateway", "ip helper-address (DHCP relay)", "a static route", "port security"], 1, "DHCP relay (ip helper-address) forwards DHCP broadcasts to a server on another subnet.");
+Q("4.2", null, "Why is NTP important on network devices?", ["It speeds up routing", "It synchronizes clocks for accurate logs and certificates", "It encrypts traffic", "It assigns IP addresses"], 1, "Synchronized time keeps log timestamps and certificate validation accurate across devices.");
+Q("4.5", null, "In syslog, which severity level is the most critical?", ["7 (Debug)", "0 (Emergency)", "4 (Warning)", "5 (Notice)"], 1, "Syslog severities run 0 (Emergency, most severe) to 7 (Debug, least severe).");
+Q("4.7", null, "Which QoS action buffers and delays traffic that exceeds a rate, smoothing the flow?", ["Policing", "Shaping", "Marking", "Classification"], 1, "Shaping delays excess traffic with buffering; policing drops or remarks it instead.");
+
+// Domain 5
+Q("5.1", null, "A weakness in software that an attacker could take advantage of is called a:", ["Threat", "Vulnerability", "Exploit", "Mitigation"], 1, "A vulnerability is the weakness; a threat is the danger, an exploit is the method used.");
+Q("5.6", "4.6", "Where should a standard ACL be placed, and why?", ["Close to the source, to filter early", "Close to the destination, since it only matches source IP", "Anywhere", "On a trunk only"], 1, "Standard ACLs match only source IP, so placing them near the destination avoids blocking traffic too broadly.");
+Q("5.6", "4.6", "What happens to traffic that matches no permit statement in an ACL?", ["It is permitted", "It is denied by the implicit deny", "It is logged only", "It loops"], 1, "Every ACL ends with an implicit deny all; unmatched traffic is dropped.");
+Q("5.7", "4.7", "Which Layer 2 security feature stops rogue DHCP servers?", ["Port security", "DHCP snooping", "DAI", "BPDU Guard"], 1, "DHCP snooping trusts only approved ports, blocking unauthorized DHCP servers.");
+Q("5.7", "4.7", "Dynamic ARP Inspection protects against which attack?", ["SQL injection", "ARP spoofing/poisoning", "Password spraying", "DDoS"], 1, "DAI validates ARP packets against the DHCP snooping table to stop ARP poisoning.");
+Q("5.8", "4.1", "Which AAA component determines what an authenticated user is allowed to do?", ["Authentication", "Authorization", "Accounting", "Auditing"], 1, "Authorization defines permitted actions after authentication verifies identity.");
+Q("5.9", "1.5", "Which wireless security standard is the most current and secure?", ["WEP", "WPA", "WPA2", "WPA3"], 3, "WPA3 is the newest standard with the strongest protections; WEP and WPA are obsolete.");
+
+// Domain 6
+Q("6.3", null, "In SDN, which plane makes the forwarding decisions?", ["Data plane", "Control plane", "Management plane", "Physical plane"], 1, "The control plane decides how traffic is forwarded; the data plane moves the packets.");
+Q("6.3", null, "A controller uses which type of API to push configuration down to network devices?", ["Northbound", "Southbound", "Eastbound", "REST only"], 1, "Southbound APIs connect the controller down to devices; northbound APIs connect up to applications.");
+Q("6.5", null, "In a REST API, which HTTP verb retrieves data without changing it?", ["POST", "GET", "DELETE", "PUT"], 1, "GET reads data. POST creates, PUT/PATCH updates, DELETE removes (CRUD).");
+Q("6.5", null, "An API call returns HTTP 401. What does this mean?", ["Success", "Unauthorized (authentication failed)", "Server error", "Not found"], 1, "401 is a client error meaning authentication is required or failed. 404 is not found; 5xx is server error.");
+Q("6.6", "5.5", "Which configuration management tool is agentless and uses YAML playbooks over SSH?", ["Terraform", "Ansible", "Puppet", "Chef"], 1, "Ansible is agentless, connecting over SSH and defining tasks in YAML playbooks.");
+Q("6.7", null, "In JSON, which brackets denote an ordered list (array)?", ["{ }", "[ ]", "( )", "< >"], 1, "Square brackets [ ] hold arrays; curly braces { } hold objects of key/value pairs.");
+
+// ====================================================================
+//  INTERACTIVE: sorts, orders, scenarios, logs, matches (single-track)
+// ====================================================================
+function TAGS(o11,o20){const x={};if(o11)x.v11=o11;if(o20)x.v20=o20;return x;}
+function SORT(o11,o20,title,buckets,items,tip){ PACK.sorts.push({ x:TAGS(o11,o20), title, buckets, items, tip }); }
+function ORDER(o11,o20,title,prompt,steps,tip){ PACK.orders.push({ x:TAGS(o11,o20), title, prompt, steps, tip }); }
+function SCN(id,o11,o20,title,intro,steps){ PACK.scenarios.push({ id, x:TAGS(o11,o20), title, intro, steps }); }
+function LOG(id,o11,o20,title,brief,lines){ PACK.logs.push({ id, x:TAGS(o11,o20), title, brief, lines }); }
+
+// --- SORTS ---
+SORT("1.1", null, "Layer 2 or Layer 3 device?", ["Layer 2", "Layer 3"],
+  [["Switch (standard)", 0], ["Bridge", 0], ["Access point", 0], ["Router", 1], ["Layer 3 switch (routing)", 1], ["Firewall (routing)", 1]],
+  "Layer 2 forwards by MAC; Layer 3 forwards by IP.");
+SORT("1.5", null, "TCP or UDP?", ["TCP", "UDP"],
+  [["Reliable, acknowledged delivery", 0], ["Three-way handshake", 0], ["HTTP, SSH, FTP", 0], ["Connectionless, no handshake", 1], ["Voice and video streaming", 1], ["DNS queries", 1]],
+  "TCP is reliable and ordered; UDP is fast and connectionless.");
+SORT("1.9", "1.4", "IPv6 address type by prefix", ["Global unicast", "Unique local", "Link-local", "Multicast"],
+  [["2001:db8::1", 0], ["Starts with 2000::/3", 0], ["FD00::/8", 1], ["Private, internal use", 1], ["FE80::/10", 2], ["This-link-only, auto", 2], ["FF00::/8", 3], ["One-to-many", 3]],
+  "2=global, FD=unique local, FE80=link-local, FF=multicast.");
+SORT("3.1", "3.1", "Administrative distance (lower = preferred)", ["Most trusted", "Least trusted"],
+  [["Connected (0)", 0], ["Static (1)", 0], ["EIGRP (90)", 0], ["OSPF (110)", 1], ["RIP (120)", 1], ["Unknown/unusable (255)", 1]],
+  "Connected 0, static 1, EIGRP 90, OSPF 110, RIP 120.");
+SORT("2.8", "4.1", "Secure or insecure management?", ["Secure", "Insecure"],
+  [["SSH", 0], ["HTTPS", 0], ["SNMPv3", 0], ["Telnet", 1], ["HTTP", 1], ["SNMPv1/v2", 1]],
+  "Encrypted versions are secure; cleartext ones are not.");
+SORT("5.6", "4.6", "Standard or extended ACL?", ["Standard ACL", "Extended ACL"],
+  [["Filters by source IP only", 0], ["Numbered 1-99", 0], ["Place near destination", 0], ["Filters by source, dest, protocol, port", 1], ["Numbered 100-199", 1], ["Place near source", 1]],
+  "Standard = source only, near destination. Extended = full detail, near source.");
+SORT("6.3", null, "Northbound or southbound API?", ["Northbound", "Southbound"],
+  [["Controller up to apps/scripts", 0], ["Often REST", 0], ["Controller down to devices", 1], ["NETCONF, OpenFlow", 1]],
+  "North = up to apps, south = down to devices.");
+SORT("5.9", "1.5", "Wireless security: current or obsolete?", ["Use today", "Obsolete"],
+  [["WPA3", 0], ["WPA2 (AES)", 0], ["WEP", 1], ["WPA (original)", 1]],
+  "WPA2/WPA3 are current; WEP and original WPA are obsolete.");
+
+// --- ORDERS ---
+ORDER("1.5", null, "TCP three-way handshake", "Put the handshake steps in order.",
+  ["SYN", "SYN-ACK", "ACK"], "Synchronize, synchronize-acknowledge, acknowledge.");
+ORDER("4.3", "4.4", "DHCP lease process (DORA)", "Order the DHCP lease steps.",
+  ["Discover", "Offer", "Request", "Acknowledge"], "DORA: Discover, Offer, Request, Acknowledge.");
+ORDER("3.2", "3.1", "Router forwarding decision", "Order how a router selects a route.",
+  ["Longest prefix match", "Lowest administrative distance", "Lowest metric"], "Prefix first, then AD, then metric.");
+ORDER("2.5", "2.5", "RSTP port states (to forwarding)", "Order the states a port moves through.",
+  ["Discarding", "Learning", "Forwarding"], "Discard, then learn, then forward.");
+ORDER("5.8", "4.1", "AAA order", "Order the three A's as they happen.",
+  ["Authentication", "Authorization", "Accounting"], "Who are you, what may you do, what did you do.");
+ORDER("4.5", null, "Syslog severity (most to least severe)", "Order from most to least severe.",
+  ["Emergency (0)", "Error (3)", "Warning (4)", "Debug (7)"], "0 is worst, 7 is chattiest.");
+
+// --- SCENARIOS ---
+SCN("vlan-trouble", "2.1", "2.1", "Two PCs, no connection",
+  "PC-A (VLAN 10) and PC-B (VLAN 20) are on the same switch but can't ping each other. Both have correct IPs in their own subnets.",
+  [
+    ["What is the most likely cause?", ["A bad cable", "They are in different VLANs with no routing between them", "Port security", "Wrong SSID"], 1,
+      "Different VLANs are separate broadcast domains; without a Layer 3 device they cannot communicate."],
+    ["What device or feature enables them to communicate?", ["A hub", "A router or Layer 3 switch doing inter-VLAN routing", "A longer cable", "Disabling STP"], 1,
+      "Inter-VLAN routing via a router-on-a-stick or a Layer 3 switch (SVIs) lets the VLANs talk."],
+    ["The link between two switches must carry both VLAN 10 and VLAN 20. How should it be configured?", ["Access port in VLAN 10", "A trunk port", "Shutdown", "Voice VLAN"], 1,
+      "A trunk carries multiple VLANs between switches, tagging frames with 802.1Q."],
+    ["After setup, VLAN 20 works but VLAN 10 doesn't cross the trunk. What should you check first?", ["The native VLAN match and allowed VLAN list on the trunk", "The DNS server", "PoE budget", "The console password"], 0,
+      "A native VLAN mismatch or a missing VLAN in the trunk's allowed list is a classic cause."]
+  ]);
+SCN("no-ip", "4.3", "4.4", "The host with a 169.254 address",
+  "A user's PC can't reach anything. ipconfig shows 169.254.88.5 with mask 255.255.0.0.",
+  [
+    ["What does the 169.254 address tell you?", ["It has a valid public IP", "APIPA: the PC couldn't reach a DHCP server", "It's using IPv6", "The NIC is disabled"], 1,
+      "169.254.0.0/16 is APIPA, auto-assigned when DHCP fails."],
+    ["The DHCP server is on a different subnet across a router. What must the router have so DHCP works?", ["A default route", "ip helper-address (DHCP relay)", "Port security", "An ACL"], 1,
+      "DHCP uses broadcasts that routers don't forward; ip helper-address relays them to the server."],
+    ["After fixing relay, you want to confirm the PC now has a real address. Which command on the PC?", ["ping 8.8.8.8", "ipconfig (or ip addr)", "traceroute", "nslookup"], 1,
+      "ipconfig (Windows) or ip addr (Linux/Mac) shows the PC's current IP configuration."],
+    ["The PC now has an IP but still can't browse the web. Name resolution fails. What is likely misconfigured?", ["The DNS server address", "The MAC address", "The cable length", "STP"], 0,
+      "Without a working DNS server, names can't resolve even though IP connectivity is fine."]
+  ]);
+SCN("stp-loop", "2.5", "2.5", "The broadcast storm",
+  "After someone added a second cable between two switches, the network slowed to a crawl and switch CPUs spiked.",
+  [
+    ["A redundant Layer 2 link with no loop prevention causes what?", ["Faster speeds", "A switching loop and broadcast storm", "Better security", "A VLAN"], 1,
+      "Redundant Layer 2 paths without STP create loops that flood broadcasts endlessly."],
+    ["Which protocol prevents this by blocking redundant paths?", ["OSPF", "Spanning Tree Protocol", "DHCP", "NAT"], 1,
+      "STP blocks redundant paths, leaving a single active path and preventing loops."],
+    ["A user's access port connects to a PC. Which feature makes it forward instantly and safely?", ["Trunking", "PortFast with BPDU Guard", "Root Guard", "LACP"], 1,
+      "PortFast speeds up edge ports; BPDU Guard shuts the port if a rogue switch sends BPDUs."],
+    ["You want to ensure a specific switch stays the root bridge. What helps?", ["Raising its priority number", "Lowering its priority (or Root Guard on others)", "Disabling STP", "Adding more loops"], 1,
+      "The lowest bridge priority wins root; Root Guard on other ports protects that choice."]
+  ]);
+
+// --- LOG HUNTS ---
+LOG("syslog", "4.5", null, "Reading syslog severity",
+  "Review these syslog messages. Flag the ones that signal a real problem needing attention (high severity).",
+  [
+    ["%LINK-3-UPDOWN: Interface Gig0/1, changed state to down", true, "Severity 3 (Error): an interface went down, a real problem."],
+    ["%SYS-5-CONFIG_I: Configured from console by admin", false, "Severity 5 (Notice): a normal, informational config event."],
+    ["%LINEPROTO-5-UPDOWN: Line protocol on Gig0/2, changed state to up", false, "Severity 5: a link came up normally."],
+    ["%OSPF-4-ERRRCV: Received invalid packet on Gig0/1", true, "Severity 4 (Warning): malformed OSPF packets warrant investigation."],
+    ["%SEC-6-IPACCESSLOGP: list 101 denied tcp 10.0.0.9", false, "Severity 6 (Info): an ACL denied a packet as designed."],
+    ["%PLATFORM-0-EMERGENCY: System is unusable", true, "Severity 0 (Emergency): the most critical message possible."]
+  ]);
+LOG("portsec", "5.7", "4.7", "Port security and Layer 2 events",
+  "Review these switch log lines during a security review. Flag the suspicious or action-needed lines.",
+  [
+    ["%PORT_SECURITY-2-PSECURE_VIOLATION: security violation on Gi0/5, MAC 00aa.bbbb.cccc", true, "A port security violation: an unexpected device plugged in."],
+    ["%DHCP_SNOOPING-5-DHCP_SNOOPING_UNTRUSTED_PORT: DHCP OFFER on untrusted port Gi0/9", true, "A rogue DHCP server is offering addresses on an untrusted port."],
+    ["%LINK-3-UPDOWN: Interface Gi0/5, changed state to administratively down", false, "A port was intentionally shut down by an admin; not itself an attack."],
+    ["%DAI-4-DHCP_SNOOPING_DENY: Invalid ARP on Gi0/9, 10.0.0.1 is not bound", true, "Dynamic ARP Inspection blocked a spoofed ARP: likely an ARP poisoning attempt."],
+    ["%SYS-5-RESTART: System restarted", false, "A normal restart notice."],
+    ["%PORT_SECURITY-2-PSECURE_VIOLATION: 50 violations on Gi0/12 in 1 minute", true, "Repeated violations suggest an active attack or a misbehaving device."]
+  ]);
+
+// --- MATCH SETS (pull by card family) ---
+PACK.matchSets = [
+  { x: TAGS("1.1", null), title: "Network components", fams: ["comp"] },
+  { x: TAGS("1.2", null), title: "Topology architectures", fams: ["topo"] },
+  { x: TAGS("1.3", "1.1"), title: "Cabling and media", fams: ["cable"] },
+  { x: TAGS("1.5", null), title: "TCP, UDP, and transport", fams: ["transport"] },
+  { x: TAGS("1.6", "1.3"), title: "IPv4 and subnetting terms", fams: ["ipv4"] },
+  { x: TAGS("1.9", "1.4"), title: "IPv6 addressing", fams: ["ipv6"] },
+  { x: TAGS("1.13", null), title: "Switching concepts", fams: ["switch"] },
+  { x: TAGS("2.1", "2.1"), title: "VLANs and trunking", fams: ["vlan", "trunk"] },
+  { x: TAGS("2.5", "2.5"), title: "Spanning Tree", fams: ["stp"] },
+  { x: TAGS("2.6", "2.2"), title: "Wireless architecture", fams: ["wireless"] },
+  { x: TAGS("3.1", "3.1"), title: "Routing table and forwarding", fams: ["routetable", "forwarding"] },
+  { x: TAGS("3.3", "3.2"), title: "Static routing", fams: ["static"] },
+  { x: TAGS("3.4", "3.3"), title: "OSPF", fams: ["ospf"] },
+  { x: TAGS("3.5", "3.4"), title: "First hop redundancy", fams: ["fhrp"] },
+  { x: TAGS("4.1", "4.3"), title: "NAT", fams: ["nat"] },
+  { x: TAGS("4.3", "4.4"), title: "DHCP and DNS", fams: ["dhcpdns"] },
+  { x: TAGS("4.4", null), title: "Monitoring (SNMP, syslog)", fams: ["mon"] },
+  { x: TAGS("4.7", null), title: "QoS", fams: ["qos"] },
+  { x: TAGS("5.1", null), title: "Security concepts", fams: ["secconcept"] },
+  { x: TAGS("5.6", "4.6"), title: "Access control lists", fams: ["acl"] },
+  { x: TAGS("5.7", "4.7"), title: "Layer 2 security", fams: ["l2sec"] },
+  { x: TAGS("5.8", "4.1"), title: "AAA", fams: ["aaa"] },
+  { x: TAGS("5.9", "1.5"), title: "Wireless security", fams: ["wifisec"] },
+  { x: TAGS("6.3", null), title: "SDN and architecture", fams: ["sdn"] },
+  { x: TAGS("6.5", null), title: "REST APIs", fams: ["rest"] },
+  { x: TAGS("6.7", null), title: "JSON and config tools", fams: ["json", "cfgmgmt"] }
+];
+
+// ====================================================================
+//  GENERATED DRILLS - fresh numbers every round (the CCNA core skill)
+// ====================================================================
+function TAGS(o11,o20){const x={};if(o11)x.v11=o11;if(o20)x.v20=o20;return x;}
+function rint(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function uniqOpts(correct, distractors) {
+  const seen = { [correct]: true }; const out = [correct];
+  for (const d of distractors) { if (out.length >= 4) break; if (!seen[d]) { seen[d] = true; out.push(d); } }
+  return shuffle(out);
+}
+// mask tables
+const MASK_OCTET = { 24: "255.255.255.0", 25: "255.255.255.128", 26: "255.255.255.192", 27: "255.255.255.224", 28: "255.255.255.240", 29: "255.255.255.248", 30: "255.255.255.252" };
+
+// 1) Usable hosts per prefix
+PACK.drills.push({
+  id: "hosts", title: "Usable hosts per subnet", x: TAGS("1.6", "1.3"),
+  desc: "Given a prefix length, how many usable hosts? Fresh prefix each round.",
+  tip: "Usable hosts = 2^(32 - prefix) - 2. The minus 2 is the network and broadcast addresses.",
+  gen() {
+    const p = rint(22, 30);
+    const hostBits = 32 - p;
+    const usable = Math.pow(2, hostBits) - 2;
+    const distract = [String(usable + 2), String(usable + 1), String(Math.pow(2, hostBits)), String(usable * 2), String(Math.pow(2, hostBits - 1) - 2)];
+    const opts = uniqOpts(String(usable), distract);
+    return { stem: "A subnet uses a /" + p + " prefix.", prompt: "How many usable host addresses does it provide?",
+      options: opts, ans: opts.indexOf(String(usable)),
+      explain: "/" + p + " leaves " + hostBits + " host bits. 2^" + hostBits + " - 2 = " + usable + " usable hosts (subtracting network and broadcast)." };
+  }
+});
+
+// 2) Prefix <-> dotted mask (last three usable classful masks)
+PACK.drills.push({
+  id: "mask", title: "Prefix to subnet mask", x: TAGS("1.6", "1.3"),
+  desc: "Convert a /prefix to its dotted-decimal mask. Fresh value each round.",
+  tip: "/24=.0, /25=.128, /26=.192, /27=.224, /28=.240, /29=.248, /30=.252. Each step halves the block.",
+  gen() {
+    const choices = [24, 25, 26, 27, 28, 29, 30];
+    const p = choices[rint(0, choices.length - 1)];
+    const correct = MASK_OCTET[p];
+    const distract = choices.filter(c => c !== p).map(c => MASK_OCTET[c]);
+    const opts = uniqOpts(correct, shuffle(distract));
+    return { stem: "A network is configured with a /" + p + " prefix.", prompt: "What is the equivalent subnet mask?",
+      options: opts, ans: opts.indexOf(correct),
+      explain: "/" + p + " = " + correct + ". The last octet value is 256 minus the block size (2^(32-prefix) within the octet)." };
+  }
+});
+
+// 3) Which subnet does an address belong to? (block-size method)
+PACK.drills.push({
+  id: "subnet", title: "Find the subnet of an address", x: TAGS("1.6", "1.3"),
+  desc: "Given an IP and prefix, find the network (subnet) address. Fresh each round.",
+  tip: "Block size = 256 - mask octet. The network address is the highest multiple of the block size at or below the host's octet.",
+  gen() {
+    const p = [25, 26, 27, 28][rint(0, 3)];
+    const block = 256 / Math.pow(2, p - 24); // 128,64,32,16
+    const third = rint(0, 20);
+    const host = rint(1, 254);
+    const netOctet = Math.floor(host / block) * block;
+    const correct = "192.168." + third + "." + netOctet;
+    const distract = [
+      "192.168." + third + "." + (netOctet + block > 255 ? 0 : netOctet + block),
+      "192.168." + third + "." + Math.max(0, netOctet - block),
+      "192.168." + third + "." + (netOctet + 1),
+      "192.168." + third + "." + (netOctet + block - 1)
+    ];
+    const opts = uniqOpts(correct, distract);
+    return { stem: "Host 192.168." + third + "." + host + " uses a /" + p + " mask.", prompt: "What is its subnet (network) address?",
+      options: opts, ans: opts.indexOf(correct),
+      explain: "/" + p + " gives a block size of " + block + " in the last octet. The largest multiple of " + block + " at or below " + host + " is " + netOctet + ", so the subnet is " + correct + "." };
+  }
+});
+
+// 4) Broadcast address of a subnet
+PACK.drills.push({
+  id: "broadcast", title: "Find the broadcast address", x: TAGS("1.6", "1.3"),
+  desc: "Given an IP and prefix, find the subnet's broadcast address. Fresh each round.",
+  tip: "Broadcast = next subnet's network address minus 1 = network + block size - 1.",
+  gen() {
+    const p = [25, 26, 27, 28][rint(0, 3)];
+    const block = 256 / Math.pow(2, p - 24);
+    const third = rint(0, 20);
+    const host = rint(1, 254);
+    const netOctet = Math.floor(host / block) * block;
+    const bcast = netOctet + block - 1;
+    const correct = "192.168." + third + "." + bcast;
+    const distract = [
+      "192.168." + third + "." + netOctet,
+      "192.168." + third + "." + (bcast - 1),
+      "192.168." + third + "." + Math.min(255, bcast + block),
+      "192.168." + third + ".255"
+    ];
+    const opts = uniqOpts(correct, distract);
+    return { stem: "Host 192.168." + third + "." + host + " uses a /" + p + " mask.", prompt: "What is the broadcast address of its subnet?",
+      options: opts, ans: opts.indexOf(correct),
+      explain: "Block size is " + block + ". The subnet is .192.168." + third + "." + netOctet + ", so the broadcast is network + " + block + " - 1 = ." + bcast + "." };
+  }
+});
+
+// 5) Port / protocol recall
+PACK.drills.push({
+  id: "ports", title: "Port and protocol recall", x: TAGS("1.5", null),
+  desc: "Name the default port for a common protocol. Fresh each round.",
+  tip: "SSH 22, Telnet 23, HTTP 80, HTTPS 443, DNS 53, DHCP 67/68, FTP 20/21, SNMP 161, Syslog 514, NTP 123.",
+  gen() {
+    const items = [["SSH", "22"], ["Telnet", "23"], ["HTTP", "80"], ["HTTPS", "443"], ["DNS", "53"], ["FTP (control)", "21"], ["SNMP", "161"], ["Syslog", "514"], ["NTP", "123"], ["DHCP server", "67"]];
+    const it = items[rint(0, items.length - 1)];
+    const distract = shuffle(items.filter(x => x[1] !== it[1]).map(x => x[1]));
+    const opts = uniqOpts(it[1], distract);
+    return { stem: "", prompt: "Which port does " + it[0] + " use by default?",
+      options: opts, ans: opts.indexOf(it[1]),
+      explain: it[0] + " uses port " + it[1] + "." };
+  }
+});
+
+// 6) Administrative distance recall
+PACK.drills.push({
+  id: "ad", title: "Administrative distance recall", x: TAGS("3.1", "3.1"),
+  desc: "Recall the default administrative distance of a route source. Fresh each round.",
+  tip: "Connected 0, Static 1, EIGRP 90, OSPF 110, RIP 120. Lower is preferred.",
+  gen() {
+    const items = [["Connected", "0"], ["Static", "1"], ["EIGRP (internal)", "90"], ["OSPF", "110"], ["RIP", "120"]];
+    const it = items[rint(0, items.length - 1)];
+    const distract = shuffle(items.filter(x => x[1] !== it[1]).map(x => x[1]).concat(["5", "100", "150", "255"]));
+    const opts = uniqOpts(it[1], distract);
+    return { stem: "", prompt: "What is the default administrative distance of " + it[0] + "?",
+      options: opts, ans: opts.indexOf(it[1]),
+      explain: it[0] + " has an administrative distance of " + it[1] + ". Lower AD is more trusted." };
+  }
+});
+
+// ====================================================================
+//  REFERENCE TABLES
+// ====================================================================
+PACK.reference = [
+  { title: "Subnetting cheat sheet (last octet)", cols: ["Prefix", "Mask (last octet)", "Block size", "Usable hosts"],
+    rows: [["/24", "0", "256", "254"], ["/25", "128", "128", "126"], ["/26", "192", "64", "62"], ["/27", "224", "32", "30"], ["/28", "240", "16", "14"], ["/29", "248", "8", "6"], ["/30", "252", "4", "2"]] },
+  { title: "Administrative distance", cols: ["Source", "AD"],
+    rows: [["Connected", "0"], ["Static", "1"], ["EIGRP (internal)", "90"], ["OSPF", "110"], ["RIP", "120"], ["External EIGRP", "170"], ["Unusable", "255"]] },
+  { title: "Common ports", cols: ["Protocol", "Port", "Transport"],
+    rows: [["FTP", "20/21", "TCP"], ["SSH", "22", "TCP"], ["Telnet", "23", "TCP"], ["DNS", "53", "UDP/TCP"], ["DHCP", "67/68", "UDP"], ["HTTP", "80", "TCP"], ["NTP", "123", "UDP"], ["SNMP", "161/162", "UDP"], ["HTTPS", "443", "TCP"], ["Syslog", "514", "UDP"]] },
+  { title: "IPv6 address types", cols: ["Type", "Prefix", "Scope"],
+    rows: [["Global unicast", "2000::/3", "Internet-routable"], ["Unique local", "FC00::/7 (FD)", "Private/internal"], ["Link-local", "FE80::/10", "Local link only"], ["Multicast", "FF00::/8", "One-to-many"]] },
+  { title: "Syslog severity levels", cols: ["Level", "Name", "Meaning"],
+    rows: [["0", "Emergency", "System unusable"], ["1", "Alert", "Act immediately"], ["2", "Critical", "Critical condition"], ["3", "Error", "Error condition"], ["4", "Warning", "Warning condition"], ["5", "Notice", "Normal but notable"], ["6", "Informational", "Info message"], ["7", "Debug", "Debug output"]] },
+  { title: "STP / RSTP port roles and states", cols: ["Item", "Meaning"],
+    rows: [["Root bridge", "Reference point; lowest bridge ID"], ["Root port", "Best path back to root (non-root switches)"], ["Designated port", "Forwarding port on a segment"], ["RSTP states", "Discarding, Learning, Forwarding"], ["PortFast", "Instant forwarding for edge ports"], ["BPDU Guard", "Shuts a PortFast port that sees a BPDU"]] }
+];
+
+// ====================================================================
+//  MEMORY HOOKS
+// ====================================================================
+PACK.hooks = [
+  ["Usable hosts", "2 to the host bits, minus 2. The minus 2 is network + broadcast."],
+  ["Block size", "256 minus the mask octet. Subnets step by the block size."],
+  ["Private ranges", "10 anything, 172.16 to 172.31, 192.168 anything."],
+  ["APIPA", "169.254 means DHCP failed."],
+  ["Admin distance", "Connected 0, Static 1, EIGRP 90, OSPF 110, RIP 120. Lower wins."],
+  ["Route selection", "Longest prefix, then AD, then metric."],
+  ["IPv6 prefixes", "2 = global, FD = unique local, FE80 = link-local, FF = multicast."],
+  ["DHCP DORA", "Discover, Offer, Request, Acknowledge."],
+  ["Syslog severity", "0 Emergency is worst, 7 Debug is chattiest."],
+  ["TCP handshake", "SYN, SYN-ACK, ACK."],
+  ["STP root election", "Lowest bridge ID (priority then MAC) becomes root."],
+  ["ACL placement", "Standard near destination, extended near source."],
+  ["CRUD / HTTP", "Create=POST, Read=GET, Update=PUT, Delete=DELETE."],
+  ["Nonoverlapping Wi-Fi", "Channels 1, 6, 11 in 2.4 GHz."],
+  ["AAA", "Authentication, Authorization, Accounting: who, what allowed, what done."]
+];
+
+// ====================================================================
+//  TEST-DAY TIPS
+// ====================================================================
+PACK.tips = [
+  ["Master subnetting cold", "Subnetting shows up throughout the exam. Drill the host, subnet, and broadcast generators until they're instant."],
+  ["Watch for sims and labs", "The CCNA includes simulations and configuration tasks. Practice in Packet Tracer or real gear, not just flashcards."],
+  ["Read the full question", "Cisco questions bury the ask in the last line: what is the FIRST step, BEST choice, or what's MISSING."],
+  ["Know AD and port numbers", "Administrative distances and common port numbers are free points; memorize the tables."],
+  ["Eliminate wrong answers", "Two options are usually clearly wrong. Narrow to two, then decide on the specific requirement."],
+  ["No calculator for subnetting", "Learn the block-size shortcut so you can subnet on paper quickly."],
+  ["Pick your version", "Use the v1.1 track for exams before Feb 3, 2027, and the v2.0 track on or after it. Switch tracks at the top of HQ."],
+  ["Hands-on beats memorizing", "Build the topology once. Configuring a VLAN or OSPF yourself cements it far better than reading about it."]
+];
+
+// ====================================================================
+//  v2.0-SPECIFIC CONTENT: questions, games, and drills for the
+//  genuinely new topics (DNS records, AI, troubleshooting, L2 security).
+//  Helpers (TAGS, Q, SORT, ORDER, SCN, LOG) already defined earlier.
+// ====================================================================
+
+// ---- v2.0 exam-style questions (v2.0 only) ----
+Q(null, "4.4", "Users can reach a website by IP but not by name, while other sites resolve fine. Which DNS record is most likely missing or wrong?", ["The MX record", "The A (or AAAA) record for that site", "The PTR record", "The NS record"], 1, "Name-to-address resolution for a host uses its A (IPv4) or AAAA (IPv6) record. MX is for mail, PTR for reverse, NS for delegation.");
+Q(null, "4.4", "Email to a domain is failing, though the website works. Which DNS record should you check first?", ["A record", "MX record", "CNAME record", "PTR record"], 1, "MX records direct mail to a domain's mail servers; a bad MX breaks email while web (A record) still works.");
+Q(null, "4.4", "A reverse lookup (IP to name) is failing for a mail server, causing it to be flagged as spam. Which record is involved?", ["A", "AAAA", "PTR", "CNAME"], 2, "PTR records provide reverse DNS (IP to name), which many mail systems check for anti-spam.");
+Q(null, "5.1", "Your monitoring platform includes an agentic AI assistant that recommends shutting a port it believes is compromised. What is the best practice before acting?", ["Always do exactly what the AI says immediately", "Verify the AI's recommendation against the evidence before acting", "Ignore all AI recommendations", "Delete the assistant"], 1, "v2.0 expects you to evaluate agentic AI and assistant output. AI can be wrong, so verify its recommendation before taking action.");
+Q(null, "5.2", "You want a generative AI system to summarize syslog output for a report. Which prompt element tells it HOW to present the answer?", ["Persona", "Output format", "Data classification", "The raw logs"], 1, "Output format specifies how the response should be structured (e.g. a bulleted summary or a table). Persona sets a role; data classification governs sensitivity.");
+Q(null, "5.2", "Before pasting device configuration into a public generative AI tool, what should you consider first?", ["The font size", "Data classification: whether the config contains sensitive data", "The AI's favorite color", "The time of day"], 1, "Responsible AI use starts with data classification: don't share confidential data (passwords, keys, topology) with tools that shouldn't have it.");
+Q(null, "5.3", "A team defines its entire switch configuration in version-controlled YAML files that are applied automatically. Which management approach is this?", ["Device-based", "Cloud-based", "Infrastructure as code", "Manual CLI"], 2, "Infrastructure as code defines configuration in version-controlled files applied by automation, rather than hand-configuring each device.");
+Q(null, "4.7", "A switch port is being flooded with broadcast traffic, degrading the network. Which Layer 2 feature limits this?", ["Port security", "Storm control", "DAI", "RA guard"], 1, "Storm control caps broadcast, multicast, or unknown-unicast traffic on a port to prevent storms.");
+Q(null, "4.7", "On an IPv6 network, an attacker's device is sending rogue Router Advertisements to misdirect hosts. Which feature blocks this?", ["DHCP snooping", "RA guard", "Storm control", "Port security"], 1, "RA guard blocks unauthorized IPv6 Router Advertisement messages from untrusted ports.");
+Q(null, "4.2", "You need to copy a router's configuration to a backup server over an encrypted channel. Which protocol fits the v2.0 blueprint?", ["TFTP", "FTP", "SCP or SFTP", "Telnet"], 2, "v2.0 emphasizes secure file transfer with SCP/SFTP instead of plain TFTP/FTP.");
+Q(null, "3.3", "You must route IPv6 with a single-area link-state protocol. Which do you configure?", ["OSPFv2", "OSPFv3", "RIPv2", "EIGRP for IPv4"], 1, "OSPFv3 is the version of OSPF that routes IPv6; OSPFv2 handles IPv4.");
+Q(null, "1.1", "A fiber link works at short range but fails on a long run between buildings. Which cable issue should you suspect first?", ["Duplex mismatch", "Exceeding the distance limit for that fiber type", "A VLAN mismatch", "A missing default route"], 1, "v2.0 adds distance and signal level as diagnosable cable issues; multimode has shorter reach than single-mode.");
+Q(null, "5.6", "A syslog message shows severity level 2. How serious is it?", ["The least serious", "Critical, near the top of severity", "Just a debug message", "Informational only"], 1, "Severity 2 is Critical. Levels run 0 (Emergency, most severe) to 7 (Debug, least severe).");
+Q(null, "2.4", "A link is up but hosts can't pass traffic. Which tools best narrow down the Layer 2/3 problem per v2.0?", ["Only reboot the switch", "show commands (including show logging), ping, traceroute, and packet capture", "Change all the cables", "Reinstall the OS"], 1, "v2.0 2.4 expects structured troubleshooting using show output, ping/extended ping, traceroute, and packet captures.");
+
+// ---- v2.0 sorts ----
+SORT(null, "4.4", "Which DNS record fixes it?", ["A / AAAA", "MX", "PTR", "CNAME"],
+  [["Website unreachable by name", 0], ["Host name won't resolve to an IP", 0], ["Email to the domain fails", 1], ["Mail server flagged, reverse lookup fails", 2], ["An alias should point to another name", 3]],
+  "A/AAAA = name to IP, MX = mail, PTR = reverse, CNAME = alias.");
+SORT(null, "5.3", "Network management approach", ["Device-based", "Cloud-based", "Controller-based", "Infrastructure as code"],
+  [["Configure each switch via its own CLI", 0], ["Manage APs from a Meraki dashboard", 1], ["Catalyst Center programs the fabric", 2], ["Config defined in version-controlled YAML", 3]],
+  "By hand, from the cloud, via a controller, or as code.");
+SORT(null, "5.2", "Prompt component", ["Persona", "Output format", "Instructions", "Data classification"],
+  [["'Act as a senior network engineer'", 0], ["'Respond as a bulleted list'", 1], ["'Summarize these three log entries'", 2], ["'This config is confidential, do not store it'", 3]],
+  "Who the AI should be, how to answer, what to do, and how sensitive the data is.");
+SORT(null, "4.7", "Layer 2 security feature to the threat", ["Port security", "DHCP snooping", "Dynamic ARP Inspection", "RA guard"],
+  [["Unknown MAC plugged into a port", 0], ["Rogue DHCP server handing out addresses", 1], ["ARP spoofing / poisoning", 2], ["Rogue IPv6 Router Advertisements", 3]],
+  "MACs, rogue DHCP, ARP spoofing, rogue IPv6 RAs.");
+
+// ---- v2.0 orders ----
+ORDER(null, "5.2", "Build a good AI prompt", "Order a sound approach to prompting a generative AI for a network task.",
+  ["Classify the data (is it sensitive?)", "Set a persona and context", "Give clear instructions", "Specify the output format", "Verify the AI's answer before acting"],
+  "Classify, set context, instruct, format, then verify.");
+ORDER(null, "2.4", "Troubleshoot a dead link (v2.0)", "Order a structured troubleshooting flow.",
+  ["Check show commands and logs", "Test reachability with ping", "Trace the path with traceroute", "Capture packets if still unclear"],
+  "Look at state and logs, then ping, trace, and capture.");
+
+// ---- v2.0 scenarios ----
+SCN("dns-trouble", null, "4.4", "Name resolution gone wrong",
+  "Users report that the company website loads by IP but not by its name, and email to the domain has stopped. Other sites work.",
+  [
+    ["The site loads by IP but not by name. Which record is the first suspect?", ["MX", "A/AAAA", "PTR", "NS"], 1, "Resolving a host name to its address uses the A (IPv4) or AAAA (IPv6) record."],
+    ["Email to the domain is also failing. Which record governs mail delivery?", ["A", "CNAME", "MX", "PTR"], 2, "MX records point mail to the domain's mail servers; a broken MX stops email."],
+    ["The mail server is now being marked as spam by recipients. Which record is often checked for this?", ["PTR (reverse DNS)", "A record", "NS record", "CNAME"], 0, "Many mail systems verify a sending server's PTR (reverse DNS) record as an anti-spam check."],
+    ["Which tool would you use on a client to query these records directly?", ["ping only", "nslookup or dig", "traceroute", "show running-config"], 1, "nslookup (or dig) queries DNS records directly to confirm what the server returns."]
+  ]);
+SCN("ai-ops", null, "5.1", "The AI assistant's recommendation",
+  "Your controller's agentic AI assistant flags unusual traffic on a switch port and recommends shutting the port and creating an ACL.",
+  [
+    ["What should you do first with the AI's recommendation?", ["Apply it instantly everywhere", "Review the evidence behind it before acting", "Ignore it entirely", "Forward it to a vendor"], 1, "v2.0 expects you to evaluate agentic AI output; verify the evidence before acting on a recommendation."],
+    ["You want the AI to explain its reasoning in a specific layout. Which prompt element controls that?", ["Persona", "Output format", "Data classification", "Temperature"], 1, "Output format specifies how the answer should be structured."],
+    ["Before pasting the switch's full config into a public AI tool for analysis, what matters most?", ["The config's line count", "Data classification: it may contain secrets", "The AI's brand", "The font"], 1, "Classify the data first; configs can contain passwords and keys that shouldn't go to an uncontrolled tool."],
+    ["The AI confidently cites a command that doesn't exist on your IOS version. This illustrates what?", ["AI is always right", "AI can hallucinate, so verify its output", "The switch is broken", "Syslog is misconfigured"], 1, "Generative AI can produce confident but wrong output; always verify before trusting it."]
+  ]);
+
+// ---- v2.0 log hunt: DNS/connectivity symptoms ----
+LOG("v2-conn", null, "2.4", "Troubleshooting output (v2.0)",
+  "You're diagnosing a connectivity complaint. Flag the lines that point to a real fault.",
+  [
+    ["show interfaces: GigabitEthernet0/1 is up, line protocol is up", false, "A healthy interface."],
+    ["show interfaces: GigabitEthernet0/2 is up, line protocol is down", true, "Up/down usually means a Layer 2 problem: encapsulation, keepalive, or duplex."],
+    ["show interfaces: 452 CRC errors, 230 collisions on Gi0/3", true, "CRC errors and collisions indicate a physical/duplex problem worth fixing."],
+    ["ping 8.8.8.8: Success rate is 100 percent", false, "Reachability to the internet is fine."],
+    ["ping 10.1.1.20: Success rate is 0 percent, timing out", true, "A total ping failure to an internal host signals a reachability fault to investigate."],
+    ["%DHCP-6-ADDRESS_ASSIGN: interface assigned 10.1.1.5", false, "A normal DHCP assignment message (severity 6, informational)."],
+    ["nslookup intranet: server can't find intranet: NXDOMAIN", true, "NXDOMAIN means the DNS name doesn't resolve: a DNS record problem."]
+  ]);
+
+// ---- v2.0 drill: DNS record types ----
+PACK.drills.push({
+  id: "dns", title: "DNS record types", x: TAGS(null, "4.4"),
+  desc: "Match the symptom or need to the right DNS record. Fresh each round.",
+  tip: "A = name to IPv4, AAAA = name to IPv6, CNAME = alias, MX = mail, NS = name servers, PTR = reverse (IP to name).",
+  gen() {
+    const items = [
+      ["resolve a host name to an IPv4 address", "A"],
+      ["resolve a host name to an IPv6 address", "AAAA"],
+      ["point an alias to another name", "CNAME"],
+      ["direct email to the domain's mail servers", "MX"],
+      ["identify the authoritative name servers", "NS"],
+      ["reverse lookup an IP back to a name", "PTR"]
+    ];
+    const it = items[rint(0, items.length - 1)];
+    const all = ["A", "AAAA", "CNAME", "MX", "NS", "PTR"];
+    const distract = shuffle(all.filter(x => x !== it[1]));
+    const opts = uniqOpts(it[1], distract);
+    return { stem: "", prompt: "Which DNS record do you use to " + it[0] + "?", options: opts, ans: opts.indexOf(it[1]),
+      explain: "To " + it[0] + ", use the " + it[1] + " record." };
+  }
+});
+
+// ---- v2.0 reference: what changed ----
+PACK.reference.push({
+  title: "v1.1 to v2.0: key changes", cols: ["Area", "v1.1", "v2.0"],
+  rows: [
+    ["Domains", "6 domains", "5 domains"],
+    ["Verbs", "Mostly configure/verify", "~30% troubleshoot"],
+    ["AI", "Light AI/ML awareness", "Full domain: agentic AI, prompting"],
+    ["Static routing", "Configure and verify", "Troubleshoot"],
+    ["OSPF", "OSPFv2 (IPv4)", "OSPFv2 and OSPFv3 (IPv6)"],
+    ["File transfer", "TFTP/FTP", "SFTP/SCP (secure)"],
+    ["DNS", "Role of DNS", "Diagnose A/AAAA/CNAME/MX/NS/PTR"],
+    ["PoE", "Describe only", "Configure on switch ports"],
+    ["L2 security", "Snooping, DAI, port security", "Adds storm control, RA guard"],
+    ["Dropped", "-", "QoS, topology theory, TCP/UDP compare, NTP config"]
+  ]
+});
+
+
+</script>
+<script id="engine">
+// ===== ENGINE: reusable for any cert content pack =====
+(function () {
+"use strict";
+// Capture a clean copy of this page (before rendering) for "Download offline copy".
+const PRISTINE = (() => {
+  try {
+    const root = document.documentElement.cloneNode(true);
+    root.querySelectorAll("script").forEach(s => { if (!["pack", "engine"].includes(s.id)) s.remove(); });
+    root.querySelectorAll("iframe").forEach(n => n.remove());
+    const app = root.querySelector("#app"); if (app) app.innerHTML = "";
+    return "<!DOCTYPE html>\n" + root.outerHTML;
+  } catch (e) { return null; }
+})();
+const HOSTED_EMBED = !!(window.claude && window.claude.use);
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const today = () => { const d = new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); };
+const dom = o => +String(o)[0];
+const objCmp = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+const T = tr => PACK.tracks[tr];
+const TRACKS = PACK.trackOrder || Object.keys(PACK.tracks);
+const OBJ_KEYS = {}; TRACKS.forEach(t => { OBJ_KEYS[t] = Object.keys(T(t).objectives).sort(objCmp); });
+const SEL = () => { const s = ((S && S.tracks) || []).filter(t => PACK.tracks[t]); return s.length ? TRACKS.filter(t => s.includes(t)) : TRACKS.slice(); };
+const DT = () => SEL().includes(SUB.map) ? SUB.map : SEL()[0];
+const oOf = (i, tr) => (i && i.x && i.x[tr]) || null;
+const inTrack = (i, tr) => !!oOf(i, tr);
+const inPool = i => SEL().some(t => inTrack(i, t));
+const trShow = i => inTrack(i, DT()) ? DT() : (SEL().find(t => inTrack(i, t)) || Object.keys((i && i.x) || {})[0]);
+const oShow = i => oOf(i, trShow(i));
+const INTERVALS = [0, 1, 3, 7, 14, 30];
+const LEVELS = PACK.levels || ["Visitor", "Apprentice", "Practitioner", "Specialist", "Engineer", "Architect", "Principal"];
+
+// ---------- build items ----------
+const ITEMS = [], BYID = {}, BYOBJ = {};
+PACK.cards.forEach(c => { const it = Object.assign({}, c, { kind: "card", id: "c:" + slug(c.t) }); if (BYID[it.id]) it.id += ":" + hash(c.d); BYID[it.id] = it; ITEMS.push(it); });
+PACK.mcq.forEach(q => { const it = Object.assign({}, q, { kind: "mcq", id: "q:" + hash(q.q) }); BYID[it.id] = it; ITEMS.push(it); });
+TRACKS.forEach(t => { BYOBJ[t] = {}; });
+ITEMS.forEach(i => { TRACKS.forEach(t => { const o = oOf(i, t); if (o) (BYOBJ[t][o] = BYOBJ[t][o] || []).push(i); }); });
+const CARDS = ITEMS.filter(i => i.kind === "card");
+
+// ---------- state ----------
+const KEY = PACK.id + ":v1";
+const blank = () => ({ v: 1, items: {}, obj: {}, xp: 0, streak: 0, lastDay: null, examDate: "", runLen: 20, newPerRun: 10, best: {}, days: {}, exams: [], welcomed: false, theme: "", tracks: [], labs: {}, updatedAt: 0 });
+let S = load();
+function migrate(s) { if (!Array.isArray(s.tracks)) s.tracks = []; if (!s.labs || typeof s.labs !== "object") s.labs = {}; return s; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) return migrate(Object.assign(blank(), JSON.parse(r))); } catch (e) {} return blank(); }
+function mergeState(a, b) {
+  if (!b || typeof b !== "object") return a;
+  if ((b.updatedAt || 0) < (a.resetAt || 0)) return a;
+  if ((a.updatedAt || 0) < (b.resetAt || 0)) a = blank();
+  const m = JSON.parse(JSON.stringify(Object.assign(blank(), a)));
+  const newer = (b.updatedAt || 0) > (a.updatedAt || 0);
+  Object.entries(b.items || {}).forEach(([k, v]) => { const x = m.items[k]; const n = v.r + v.w, nx = x ? x.r + x.w : -1; if (!x || n > nx || (n === nx && v.d > x.d)) m.items[k] = v; });
+  Object.entries(b.obj || {}).forEach(([k, v]) => { const x = m.obj[k]; if (!x || v.t > x.t) m.obj[k] = v; });
+  Object.entries(b.days || {}).forEach(([k, v]) => { m.days[k] = Math.max(m.days[k] || 0, v); });
+  Object.entries(b.best || {}).forEach(([k, v]) => { m.best[k] = Math.max(m.best[k] || 0, v); });
+  const seen = new Set(m.exams.map(x => x.at)); (b.exams || []).forEach(x => { if (!seen.has(x.at)) m.exams.push(x); }); m.exams.sort((x, y) => x.at - y.at);
+  Object.entries(b.labs || {}).forEach(([k, v]) => { const x = m.labs[k] || { s: [], c: [], done: false };
+    m.labs[k] = { s: [...new Set([...(x.s || []), ...(v.s || [])])], c: [...new Set([...(x.c || []), ...(v.c || [])])], done: !!(x.done || v.done) }; });
+  m.xp = Math.max(m.xp || 0, b.xp || 0);
+  if ((b.lastDay || 0) > (m.lastDay || 0)) { m.lastDay = b.lastDay; m.streak = b.streak; } else if (b.lastDay === m.lastDay) m.streak = Math.max(m.streak, b.streak || 0);
+  if (newer) ["examDate", "runLen", "newPerRun", "theme", "tracks", "welcomed"].forEach(k => { if (b[k] !== undefined && b[k] !== "") m[k] = b[k]; });
+  else if (!m.examDate && b.examDate) m.examDate = b.examDate;
+  m.welcomed = m.welcomed || !!b.welcomed;
+  m.resetAt = Math.max(a.resetAt || 0, b.resetAt || 0);
+  m.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
+  return migrate(m);
+}
+if (window.__SEED) { try { S = mergeState(S, migrate(Object.assign(blank(), window.__SEED))); localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() { S.updatedAt = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} cloudSave(); }
+
+// optional account sync (claude.ai runtime). Works without it.
+let cloud = null, cloudTimer = null, syncNote = "";
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db || !user) return;
+    const uid = await user.id(); if (!uid) return;
+    const ref = db.doc("data/users/" + uid + "/progress");
+    const snap = await ref.get();
+    cloud = { ref };
+    if (snap.exists) {
+      const d = snap.data();
+      if (d && d.state) { const remote = migrate(Object.assign(blank(), JSON.parse(d.state))); S = mergeState(S, remote); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+    }
+    syncNote = "Progress saves to your Claude account and this browser"; cloudSave(); render();
+  } catch (e) { cloud = null; }
+})();
+function cloudSave() {
+  if (!cloud) return; clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(async () => { try { await cloud.ref.set({ state: JSON.stringify(S), updatedAt: S.updatedAt }); } catch (e) {} }, 1200);
+}
+
+// ---------- files: offline copy + backups ----------
+async function offerFile(filename, data, mime) {
+  if (HOSTED_EMBED) {
+    try {
+      const dl = await window.claude.use("downloads");
+      if (dl) { await dl.save({ filename, data: new Blob([data], { type: mime }) }); return true; }
+    } catch (err) { if (err && err.code === "declined") return false; }
+  }
+  try {
+    const url = URL.createObjectURL(new Blob([data], { type: mime }));
+    const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000); return true;
+  } catch (err) { toast("This browser blocked the download"); return false; }
+}
+function stamp() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function downloadOffline() {
+  if (!PRISTINE) return toast("Offline copy isn't available in this view");
+  const seed = "<script id=\"seed\">window.__SEED=" + JSON.stringify(S).replace(/</g, "\\u003c") + ";<\/script>";
+  const html = PRISTINE.replace('<script id="pack">', seed + '\n<script id="pack">');
+  offerFile(slug(PACK.brand) + "-offline.html", html, "text/html");
+}
+function downloadBackup() { offerFile(PACK.id + "-progress-" + stamp() + ".json", JSON.stringify(S), "application/json"); }
+function importBackup(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    try { const b = JSON.parse(r.result); if (!b || typeof b.items !== "object") throw 0; S = mergeState(S, migrate(Object.assign(blank(), b))); save(); render(); toast("Backup merged into your progress"); }
+    catch (err) { toast("That file isn't a Sec+ Ops backup"); }
+  };
+  r.readAsText(file);
+}
+
+// ---------- learning model ----------
+function touchDay() { const t = today(); S.days[t] = (S.days[t] || 0) + 1; if (S.lastDay !== t) { S.streak = S.lastDay === t - 1 ? S.streak + 1 : 1; S.lastDay = t; } }
+function addXP(n) { S.xp += n; }
+function objStat1(k, ok) { const s = S.obj[k] || { r: 0, t: 0 }; s.t++; if (ok) s.r++; S.obj[k] = s; }
+function objStat(x, ok) { Object.entries((x && x.x) || {}).forEach(([t, o]) => objStat1(t + ":" + o, ok)); }
+function grade(id, ok) {
+  const it = S.items[id] || { b: 0, d: 0, r: 0, w: 0 };
+  if (ok) { it.b = Math.min(5, it.b + 1); it.d = today() + INTERVALS[it.b]; it.r++; }
+  else { it.b = 1; it.d = today(); it.w++; }
+  S.items[id] = it; objStat(BYID[id], ok); addXP(ok ? 10 : 2); touchDay();
+}
+function seenCount(list) { return list.filter(i => S.items[i.id]).length; }
+function objMastery(o, tr) {
+  tr = tr || DT(); const its = BYOBJ[tr][o] || []; if (!its.length) return 0;
+  let m = 0; its.forEach(i => { const st = S.items[i.id]; if (st) m += st.b / 5; }); m /= its.length;
+  const a = S.obj[tr + ":" + o]; const cov = seenCount(its) / its.length;
+  if (a && a.t >= 3) return Math.min(1, 0.85 * m + 0.15 * (a.r / a.t) * cov);
+  return m;
+}
+function domMastery(d, tr) { const os = OBJ_KEYS[tr].filter(o => dom(o) === d); return os.reduce((s, o) => s + objMastery(o, tr), 0) / os.length; }
+function readiness(tr) { tr = tr || DT(); return T(tr).domains.reduce((s, d) => s + d.w * domMastery(d.n, tr), 0) / 100; }
+function level() { const l = Math.floor(S.xp / 600); return { n: l + 1, title: LEVELS[Math.min(l, LEVELS.length - 1)], into: S.xp % 600 }; }
+function dueCount(filter) { const t = today(); return ITEMS.filter(i => inPool(i) && (!filter || filter(i)) && S.items[i.id] && S.items[i.id].d <= t).length; }
+function newCount(filter) { return ITEMS.filter(i => inPool(i) && (!filter || filter(i)) && !S.items[i.id]).length; }
+
+function pickNew(list, n) {
+  const groups = {};
+  list.forEach(i => { const tr = trShow(i), o = oOf(i, tr), k = tr + ":" + dom(o);
+    if (!groups[k]) groups[k] = { w: ((T(tr).domains[dom(o) - 1] || { w: 10 }).w) * (tr === DT() ? 1.5 : 1), a: [] };
+    groups[k].a.push(i); });
+  Object.values(groups).forEach(g => g.a.sort((x, y) => objCmp(oShow(x), oShow(y)) || (x.kind === y.kind ? 0 : x.kind === "card" ? -1 : 1)));
+  const out = [];
+  while (out.length < n) {
+    const ks = Object.keys(groups).filter(k => groups[k].a.length); if (!ks.length) break;
+    const tot = ks.reduce((s, k) => s + groups[k].w, 0); let r = Math.random() * tot, pick = ks[0];
+    for (const k of ks) { r -= groups[k].w; if (r <= 0) { pick = k; break; } }
+    out.push(groups[pick].a.shift());
+  }
+  return out;
+}
+function buildRun(filter, len, newMax) {
+  len = len || S.runLen; newMax = newMax == null ? S.newPerRun : newMax;
+  const t = today(); const pool = ITEMS.filter(i => inPool(i) && (!filter || filter(i)));
+  const due = pool.filter(i => S.items[i.id] && S.items[i.id].d <= t).sort((a, b) => S.items[a.id].d - S.items[b.id].d || S.items[a.id].b - S.items[b.id].b);
+  let run = due.slice(0, len);
+  run = run.concat(pickNew(pool.filter(i => !S.items[i.id]), Math.min(newMax, len - run.length)));
+  if (run.length < len) {
+    const extra = shuffle(pool.filter(i => S.items[i.id] && !run.includes(i))).sort((a, b) => S.items[a.id].b - S.items[b.id].b).slice(0, len - run.length);
+    run = run.concat(extra);
+  }
+  return run;
+}
+
+// ---------- questions ----------
+function distractors(item, n) {
+  const pick = new Map();
+  const add = arr => shuffle(arr).forEach(c => { if (pick.size < n && c.id !== item.id && c.t !== item.t && !pick.has(c.t)) pick.set(c.t, c); });
+  add(CARDS.filter(c => c.f === item.f));
+  add(CARDS.filter(c => oShow(c) === oShow(item)));
+  add(CARDS.filter(c => dom(oShow(c)) === dom(oShow(item))));
+  return [...pick.values()];
+}
+function makeQ(item, forceDir) {
+  if (item.kind === "mcq") {
+    const idx = shuffle(item.c.map((_, i) => i));
+    return { item, ask: "", prompt: item.q, options: idx.map(i => item.c[i]), ans: idx.indexOf(item.a), explain: item.e, hook: "" };
+  }
+  const opts = shuffle([item, ...distractors(item, 3)]);
+  const fwd = forceDir != null ? forceDir : Math.random() < 0.6;
+  if (fwd) return { item, ask: item.f === "port" ? "Which protocol is this?" : "Which term matches this description?", prompt: item.d, options: opts.map(x => x.t), ans: opts.indexOf(item), explain: item.t + ": " + item.d, hook: item.m };
+  return { item, ask: item.f === "port" ? "What does this protocol use?" : "What does this term mean?", prompt: item.t, term: true, options: opts.map(x => x.d), ans: opts.indexOf(item), explain: item.t + ": " + item.d, hook: item.m };
+}
+
+// ---------- UI state ----------
+let VIEW = "hq", ACT = null, SUB = { train: null, lib: "obj" }, examTimer = null;
+const app = () => $("#app");
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1800); }
+function chip(x) {
+  const tr = trShow(x), o = oOf(x, tr); if (!o) return "";
+  const multi = SEL().length > 1;
+  const also = multi ? SEL().filter(t => t !== tr && inTrack(x, t)).map(t => T(t).short) : [];
+  return `<span class="chip d${dom(o)}">${multi ? esc(T(tr).short) + " " : ""}${esc(o)} ${esc(T(tr).objectives[o][0])}${also.length ? " + " + esc(also.join(", ")) : ""}</span>`;
+}
+const ichip = x => chip(x);
+function pct(x) { return Math.round(x * 100) + "%"; }
+
+function render() {
+  if (!render._branded) {
+    render._branded = true;
+    try {
+      document.title = (PACK.title || PACK.brand || "Study Trainer");
+      var bn = document.getElementById("brandName"); if (bn) bn.textContent = PACK.brand || PACK.title || "Study";
+      var bb = document.getElementById("brandBadge"); if (bb && PACK.badge) bb.textContent = PACK.badge;
+      var btn = document.getElementById("brandBtn"); if (btn) btn.setAttribute("aria-label", (PACK.brand || "home") + " home");
+    } catch (e) {}
+  }
+  if (S.theme) document.documentElement.setAttribute("data-theme", S.theme); else document.documentElement.removeAttribute("data-theme");
+  document.body.classList.toggle("playing", !!ACT);
+  const tabs = [["hq", "HQ"], ["train", "Train"], ["library", "Library"], ["exam", "Exam"]];
+  const navHtml = tabs.map(([v, l]) => `<button data-act="nav" data-v="${v}" ${VIEW === v && !ACT ? 'aria-current="page"' : ""}>${l}</button>`).join("");
+  $("#nav").innerHTML = navHtml; $("#bnav").innerHTML = navHtml;
+  const lv = level();
+  const rdy = `<div class="stat"><b>${pct(readiness(DT()))}</b>ready ${esc(T(DT()).short)}</div>`;
+  $("#stats").innerHTML = `<div class="stat"><b>${S.streak}</b>day streak</div><div class="stat hide-sm"><b>${lv.title}</b>level ${lv.n}, ${S.xp} XP</div>${rdy}`;
+  if (ACT) return renderAct();
+  ({ hq: renderHQ, train: renderTrain, library: renderLibrary, exam: renderExam })[VIEW]();
+}
+
+// ---------- HQ ----------
+function trackPicker() {
+  return `<section class="panel trackbar"><div><h2 style="font-size:19px">Studying for</h2><p class="muted" style="margin:2px 0 0;font-size:14.5px">Pick one or more. Shared material counts toward every exam it's on.</p></div><div class="seg" role="group" aria-label="Exams">` +
+    TRACKS.map(k => `<button aria-pressed="${SEL().includes(k)}" data-act="track" data-t="${k}"><b>${esc(T(k).short)} <span class="muted" style="font-weight:500;font-size:13px">${esc(T(k).code)}</span></b><small>${esc(T(k).label)}</small></button>`).join("") + `</div></section>`;
+}
+function mapToggle() {
+  if (SEL().length < 2) return "";
+  return `<div class="tabs" style="margin:0">${SEL().map(t => `<button data-act="maptr" data-t="${t}" aria-pressed="${DT() === t}">${esc(T(t).short)}</button>`).join("")}</div>`;
+}
+function renderHQ() {
+  const due = dueCount(), fresh = newCount();
+  const willNew = Math.min(S.newPerRun, fresh, Math.max(0, S.runLen - due));
+  const days = []; const t = today(); for (let i = 13; i >= 0; i--) days.push(S.days[t - i] || 0);
+  const mx = Math.max(1, ...days);
+  const ex = examInfo(); const lv = level(); const dt = DT(); const TT = T(dt);
+  let h = "";
+  if (!S.welcomed) h += `<section class="panel welcome" style="margin-bottom:18px"><h2 style="font-size:22px">How this works</h2>
+    <ol><li>Pick your exams below. Services shared between exams are studied once and count toward all of them.</li>
+    <li>Do one <b>daily run</b> (about 10 minutes). New terms show up as study cards first, then come back as questions a few minutes later.</li>
+    <li>Get it right and it returns in 1, 3, 7, 14, then 30 days. Miss it and it comes back at the end of the run and again in your next one.</li>
+    <li>Use <b>Train</b> for hands-on games: matching, sorting, ordering steps, engagement scenarios, log reading, and quick drills.</li>
+    <li>The map is the exam. Each room is one official ${esc(PACK.roomWord.replace(/s$/, ""))}. Fill every room to be ready.</li></ol>
+    <button class="btn small" data-act="welcomed">Got it</button></section>`;
+  h += trackPicker();
+  const rk = SEL().length > 1 ? `<div class="rlist">${SEL().map(k => { const r = readiness(k); return `<div><span>${esc(T(k).short)}</span><span class="bar"><i style="width:${r * 100}%"></i></span><b>${pct(r)}</b></div>`; }).join("")}</div><span>Estimated readiness for each exam</span>` : `<b>${pct(readiness(TT.key))}</b><span>Estimated readiness for ${esc(TT.code)}</span>`;
+  h += `<div class="grid2" style="margin-top:18px"><section class="panel today">
+      <h1>Today's run</h1><p class="muted" style="margin:0">Reviews that are due, plus a few new terms, weighted toward the heaviest exam domains.</p>
+      <div class="counts"><div><b>${Math.min(due, S.runLen)}</b>due reviews</div><div><b>${willNew}</b>new terms</div><div><b>${fresh}</b>not yet seen</div></div>
+      <button class="btn" data-act="run">Start today's run</button>
+      <div class="focus"><span class="muted" style="font-size:14px;align-self:center">Or focus on one ${esc(TT.short)} domain:</span>${TT.domains.map(d => `<button class="d${d.n}" data-act="run" data-d="${d.n}">${d.n}. ${esc(d.short)}</button>`).join("")}</div>
+    </section>
+    <section class="kpis">
+      <div class="kpi">${rk}</div>
+      <div class="kpi"><b>${ex.days == null ? "Not set" : ex.days + " days"}</b><span>${ex.days == null ? "Set an exam date in the Exam tab" : "Until your exam"}</span></div>
+      <div class="kpi"><b>${lv.title}</b><span>Level ${lv.n}. ${600 - lv.into} XP to next</span><div class="bar" style="margin-top:8px"><i style="width:${lv.into / 6}%"></i></div></div>
+      <div class="kpi"><b>${S.streak} day${S.streak === 1 ? "" : "s"}</b><span>Study streak. Last 14 days:</span><div class="spark">${days.map(v => `<i class="${v ? "" : "zero"}" style="height:${v ? 15 + (v / mx) * 85 : 6}%"></i>`).join("")}</div></div>
+    </section></div>`;
+  h += `<div class="sechead"><h2>${esc(PACK.mapTitle)}: ${OBJ_KEYS[dt].length} ${esc(PACK.roomWord)} on ${esc(TT.code)}</h2>${mapToggle() || `<span class="muted" style="font-size:14px">Tap a room to study or drill it</span>`}</div>`;
+  h += `<div class="plan">` + TT.domains.map(d => {
+    const os = OBJ_KEYS[dt].filter(o => dom(o) === d.n);
+    return `<section class="wing d${d.n} ${os.length > 4 ? "wide" : ""}"><header><span class="num">${d.n}</span><h3>${esc(d.name)}</h3><span class="w">${d.w}% of exam</span></header>
+      <div class="rooms">${os.map(o => { const m = objMastery(o, dt); return `<button class="room ${m >= 0.8 ? "secured" : ""}" style="--m:${m.toFixed(3)}" data-act="room" data-o="${o}"><span class="rn">${o}</span><span class="rt">${esc(TT.objectives[o][0])}</span><span class="rp">${m >= 0.8 ? "Secured, " : ""}${pct(m)}</span></button>`; }).join("")}</div></section>`;
+  }).join("") + `</div>
+  <div class="legend"><span><i></i>Fill level = mastery (how far each card has moved through the review boxes)</span><span><i style="border-width:2.5px;border-color:var(--ink)"></i>Heavy outline = secured (80%+)</span></div>`;
+  h += `<div class="sechead"><h2>Settings</h2></div><section class="panel row">
+    <label>Run length <select data-act="set" data-k="runLen">${[10, 15, 20, 30].map(n => `<option ${S.runLen === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <label>New terms per run <select data-act="set" data-k="newPerRun">${[5, 10, 15, 20].map(n => `<option ${S.newPerRun === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <label>Theme <select data-act="set" data-k="theme"><option value="" ${!S.theme ? "selected" : ""}>Match device</option><option value="light" ${S.theme === "light" ? "selected" : ""}>Light</option><option value="dark" ${S.theme === "dark" ? "selected" : ""}>Dark</option></select></label>
+    <button class="btn ghost small" data-act="reset">Reset all progress</button></section>
+  <div class="sechead"><h2>Offline and backups</h2></div><section class="panel">
+    <p style="margin-top:0" class="sync">${esc(syncNote || (location.protocol === "file:" ? "Offline copy: progress saves in this browser on this device" : "Progress saves in this browser on this device"))}</p>
+    <div class="row">
+      <button class="btn small" data-act="dloffline">Download offline copy</button>
+      <button class="btn ghost small" data-act="dlbackup">Save progress backup</button>
+      <label class="btn ghost small" style="cursor:pointer">Load progress backup<input type="file" accept=".json,application/json" data-act="importfile" hidden></label>
+    </div>
+    <p class="muted" style="font-size:14.5px;margin-bottom:0">The offline copy is a single file that runs in any browser with no internet, and it starts with your current progress. Backups merge, so nothing is lost: bring a backup from one device into another and you keep the best of both.</p>
+  </section>`;
+  app().innerHTML = h;
+}
+
+// ---------- TRAIN ----------
+let MODES; const modes = () => (MODES = [
+  ["run", "Daily run", "Spaced repetition. Due reviews plus new terms. The core habit.", "Every day"],
+  ...((PACK.labs || []).length ? [["labs", "Hands-on labs", "Guided builds in your own AWS account, with checkpoints, cleanup lists, and a quiz.", `${(PACK.labs || []).filter(inPool).length} labs, ${(PACK.labs || []).filter(l => S.labs[l.id] && S.labs[l.id].done).length} done`]] : []),
+  ["blitz", "60-second blitz", "Answer as many as you can before time runs out. Beat your best.", "Speed and recall"],
+  ["match", "Match it", "Pair terms with their meanings: tools, flags, attacks, and more.", `${PACK.matchSets.filter(inPool).length} sets`],
+  ["sort", "Sort it", "Drop each item into the right bucket: recon types, attack classes, and phases.", `${PACK.sorts.filter(inPool).length} sorting games`],
+  ["order", "Put it in order", "Tap steps in the right sequence. Incident response, order of volatility.", `${PACK.orders.filter(inPool).length} sequences`],
+  ["scen", PACK.scenarioLabel || "Scenarios", "Step through a real-world situation and make the calls, one decision at a time.", `${PACK.scenarios.filter(inPool).length} scenarios`],
+  ["log", "Log hunter", "Read real-looking logs and flag the attack lines.", `${PACK.logs.filter(inPool).length} log files`],
+  ["drill", "Math drills", "Fresh numbers every round: " + PACK.drills.filter(inPool).map(d => d.title.toLowerCase()).join(", ") + ".", `${PACK.drills.filter(inPool).length} drills`],
+  ["exam", "Practice exam", "Timed, weighted like the real test, with a scaled score estimate.", "Quick, half, or full length"]
+]);
+function renderTrain() {
+  modes(); const m = SUB.train; let h = "";
+  if (!m) {
+    h = `<div class="sechead" style="margin-top:0"><h2>Training grounds</h2></div><p class="lead muted" style="margin-top:0">Each game feeds the same memory system, so a term you practice in a match or scenario still counts toward your map.</p><div class="modes">` +
+      MODES.map(([k, t, d, tag]) => `<button class="mode" data-act="mode" data-m="${k}"><h3>${t}</h3><p>${d}</p><span class="tag">${tag}</span></button>`).join("") + `</div>`;
+    return (app().innerHTML = h);
+  }
+  const back = `<button class="x" data-act="mode" data-m="">Back to all games</button>`;
+  const best = k => S.best[k] != null ? `Best: ${S.best[k]}` : "Not played yet";
+  const list = (arr, act, keyf, label, sub) => `<div class="picker">` + arr.map((x, i) => [x, i]).filter(([x]) => inPool(x)).map(([x, i]) => `<button class="pick d${dom(oShow(x))}" data-act="${act}" data-i="${i}"><b>${esc(label(x))}</b><small>${ichip(x)} ${esc(sub(x, keyf(x)))}</small></button>`).join("") + `</div>`;
+  if (m === "match") h = list(PACK.matchSets, "match", x => "m:" + x.title, x => x.title, (x, k) => best(k));
+  if (m === "sort") h = list(PACK.sorts, "sort", x => "s:" + x.title, x => x.title, (x, k) => best(k));
+  if (m === "order") h = list(PACK.orders, "order", x => "o:" + x.title, x => x.title, (x, k) => best(k));
+  if (m === "scen") h = list(PACK.scenarios, "scen", x => "sc:" + x.id, x => x.title, (x, k) => best(k));
+  if (m === "log") h = list(PACK.logs, "log", x => "l:" + x.id, x => x.title, (x, k) => best(k));
+  if (m === "blitz") h = `<p class="lead">Pick a pool. Every answer also counts toward your review schedule.</p><div class="focus"><button data-act="blitz" data-d="">All selected exams</button>${T(DT()).domains.map(d => `<button class="d${d.n}" data-act="blitz" data-d="${d.n}">${esc(T(DT()).short)} ${d.n}. ${esc(d.short)}</button>`).join("")}</div><p class="muted">${best("blitz")}</p>`;
+  if (m === "drill") h = list(PACK.drills, "drill", x => "d:" + x.id, x => x.title, (x, k) => best(k));
+  if (m === "labs") h = `<p class="lead" style="margin-top:0">Build it for real. Start with Lab 0 to protect your account, and always finish the cleanup list so nothing keeps billing.</p>` +
+    list(PACK.labs, "lab", x => x.id, x => x.title, x => { const st = S.labs[x.id]; const n = x.steps.length + x.cleanup.length; const d = st ? (st.s || []).length + (st.c || []).length : 0; return (st && st.done ? "Complete. " : d ? d + " of " + n + " checked. " : "") + x.time + ". " + x.cost; });
+  if (m === "exam") { VIEW = "exam"; SUB.train = null; return render(); }
+  if (m === "run") { SUB.train = null; return startRun(); }
+  const title = MODES.find(x => x[0] === m)[1];
+  app().innerHTML = `<div class="playhead">${back}<h2 style="font-size:24px">${esc(title)}</h2></div>` + h;
+}
+
+// ---------- LIBRARY ----------
+function renderLibrary() {
+  const tab = SUB.lib; let h = `<div class="sechead" style="margin-top:0"><h2>Library</h2></div><div class="tabs">` +
+    [["obj", "Objectives"], ["ref", "Reference tables"], ["hooks", "Memory hooks"]].map(([k, l]) => `<button data-act="libtab" data-t="${k}" aria-pressed="${tab === k}">${l}</button>`).join("") + `</div>`;
+  if (tab === "obj") {
+    const dt = DT(), TT = T(dt);
+    h += (SEL().length > 1 ? `<div class="row" style="margin-bottom:6px"><span class="muted">Show objectives for:</span>${mapToggle()}</div>` : "") + TT.domains.map(d => `<h3 style="margin:22px 0 10px;font-size:20px" class="d${d.n}"><span style="color:var(--dc)">${d.n}.0</span> ${esc(d.name)} <span class="muted" style="font-size:15px;font-weight:500">${d.w}%</span></h3>` +
+      OBJ_KEYS[dt].filter(o => dom(o) === d.n).map(o => {
+        const cards = (BYOBJ[dt][o] || []).filter(i => i.kind === "card"), qs = (BYOBJ[dt][o] || []).filter(i => i.kind === "mcq");
+        return `<details class="obj d${d.n}" ${ACT_OPEN === o ? "open" : ""}><summary><span class="rn">${o}</span><span>${esc(TT.objectives[o][1])}</span><span class="pct">${pct(objMastery(o, dt))}</span></summary><div class="objbody">
+          <div class="row"><button class="btn small" data-act="drill1" data-o="${o}">Drill this ${esc(PACK.roomWord.replace(/s$/, ""))}</button><span class="muted" style="font-size:14px">${cards.length} terms, ${qs.length} exam-style questions</span></div>
+          <div class="terms">${cards.map(c => { const st = S.items[c.id]; const also = TRACKS.filter(t => t !== dt && inTrack(c, t)).map(t => T(t).short); return `<div><b>${esc(c.t)}</b>${also.length ? `<span class="box">Also on ${esc(also.join(", "))}</span>` : ""}${st ? `<span class="box">Box ${st.b}/5</span>` : ""}<p>${esc(c.d)}</p>${c.m ? `<em>Memory hook: ${esc(c.m)}</em>` : ""}</div>`; }).join("")}</div></div></details>`;
+      }).join("")).join("");
+  }
+  if (tab === "ref") h += (PACK.reference || []).map(t => `<h3 style="margin:22px 0 10px">${esc(t.title)}</h3><div class="tablewrap"><table><thead><tr>${t.cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((v, i) => `<td>${i === 0 ? `<b>${esc(v)}</b>` : esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join("");
+  if (tab === "hooks") h += `<div class="terms panel">` + (PACK.hooks || []).map(([t, d]) => `<div><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join("") + `</div>`;
+  app().innerHTML = h;
+}
+let ACT_OPEN = null;
+
+// ---------- EXAM TAB ----------
+function examInfo() { if (!S.examDate) return { days: null }; const d = new Date(S.examDate + "T00:00:00"); const days = Math.ceil((d - new Date()) / 86400000); return { days: Math.max(0, days) }; }
+function renderExam() {
+  const ex = examInfo(); const unseen = newCount();
+  const perDay = ex.days ? Math.ceil(unseen / Math.max(1, ex.days - 7)) : null;
+  const trs = SEL();
+  let h = `<div class="sechead" style="margin-top:0"><h2>Your exams</h2></div><div class="${trs.length > 1 ? "grid2" : ""}" style="gap:14px">` + trs.map(tr => { const E = T(tr); return `<section class="panel" style="margin-bottom:14px"><h3 style="font-size:19px;margin-bottom:2px">${esc(E.label)} <span class="muted" style="font-weight:500">${esc(E.code)}</span></h3><p class="muted" style="margin:0 0 8px;font-size:14px">${esc(E.status)}</p>
+    <div class="facts" style="margin:8px 0"><div><b>${E.questions}</b><span>questions${E.scored ? ` (${E.scored} scored)` : ""}</span></div><div><b>${E.minutes} min</b><span>time limit</span></div><div><b>${E.pass}</b><span>to pass, on 100 to 1,000</span></div><div><b>${esc(E.price)}</b><span>exam fee</span></div></div>` +
+    E.domains.map(d => `<div class="dbar d${d.n}"><span>${d.n}. ${esc(d.name)}</span><div class="bar"><i style="width:${d.w / 32 * 100}%"></i></div><b>${d.w}%</b></div>`).join("") + `</section>`; }).join("") + `</div>
+  <div class="sechead"><h2>Your exam date</h2></div><section class="panel row">
+    <label>Exam date <input type="date" value="${esc(S.examDate)}" data-act="examdate"></label>
+    <span>${ex.days == null ? "Set a date to get a daily target." : `<b>${ex.days} days</b> left. ${unseen} items unseen for your selected exams. Aim for about <b>${perDay}</b> new items per day and finish new material a week early for review.`}</span></section>
+  <div class="sechead"><h2>Practice exams</h2></div><section class="panel"><p style="margin-top:0">Questions are drawn from every domain in that exam's proportions, with no feedback until the end. Aim for 80% or better before booking.</p>
+    ${trs.map(tr => { const E = T(tr); const half = Math.round(E.questions / 2); return `<div class="row" style="margin-bottom:10px"><b style="min-width:120px">${esc(E.short)}</b><button class="btn" data-act="exam" data-n="20" data-tr="${tr}">Quick 20</button><button class="btn ghost" data-act="exam" data-n="${half}" data-tr="${tr}">${half} questions</button><button class="btn ghost" data-act="exam" data-n="${E.questions}" data-tr="${tr}">Full ${E.questions}</button></div>`; }).join("")}
+    ${S.exams.length ? `<h3 style="margin:18px 0 8px;font-size:17px">History</h3>` + S.exams.slice(-8).reverse().map(e => `<div class="dbar"><span>${new Date(e.at).toLocaleDateString()} ${esc(T(e.tr) ? T(e.tr).short : "")} (${e.n} q)</span><div class="bar"><i style="width:${e.p}%;background:${e.s >= (T(e.tr) || { pass: 720 }).pass ? "var(--ok)" : "var(--bad)"}"></i></div><b>${e.s}</b></div>`).join("") : ""}
+  </section>
+  <div class="sechead"><h2>Test-day playbook</h2></div><section class="panel terms">
+    ${(PACK.tips || []).map(([t, d]) => `<div><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join("")}</section>`;
+  app().innerHTML = h;
+}
+
+// ---------- ACTIVITIES ----------
+function startQuiz(title, items, opts) {
+  opts = opts || {};
+  const list = [], pending = [];
+  items.forEach(it => {
+    if (opts.learn !== false && it.kind === "card" && !S.items[it.id]) { list.push({ learn: true, item: it }); pending.push({ q: makeQ(it), at: list.length + 3 }); }
+    else list.push(makeQ(it));
+    for (let k = pending.length - 1; k >= 0; k--) if (pending[k].at <= list.length) { list.push(pending[k].q); pending.splice(k, 1); }
+  });
+  pending.forEach(p => list.push(p.q));
+  ACT = { type: "quiz", title, list, i: 0, answered: false, correct: 0, graded: 0, missed: [], requeued: new Set(), xp0: S.xp };
+  window.scrollTo(0, 0); render();
+}
+function startRun(d) {
+  const dt = DT(); const filter = d ? (i => inTrack(i, dt) && dom(oOf(i, dt)) === +d) : null;
+  const items = buildRun(filter);
+  if (!items.length) return toast("Nothing left in this pool");
+  startQuiz(d ? T(DT()).short + " domain " + d + " run" : "Today's run", items);
+}
+function renderAct() {
+  const a = ACT;
+  ({ lab: renderLab, quiz: renderQuiz, blitz: renderBlitz, match: renderMatch, sort: renderSort, order: renderOrder, scen: renderScen, log: renderLog, drill: renderDrill, exam: renderExamRun, done: renderDone })[a.type]();
+}
+function head(i, n, label) { return `<div class="playhead"><button class="x" data-act="quit">Exit</button><div class="bar"><i style="width:${n ? (i / n) * 100 : 0}%"></i></div><span class="count">${label || i + " / " + n}</span></div>`; }
+function optsHtml(q, picked, act) {
+  return `<div class="opts">` + q.options.map((o, i) => {
+    let cls = ""; if (picked != null) { if (i === q.ans) cls = "right"; else if (i === picked) cls = "wrong"; }
+    return `<button class="opt ${cls}" data-act="${act}" data-i="${i}" ${picked != null ? "disabled" : ""}><span class="k">${i + 1}</span><span>${esc(o)}</span></button>`;
+  }).join("") + `</div>`;
+}
+function renderQuiz() {
+  const a = ACT, cur = a.list[a.i];
+  let h = `<div class="play">` + head(a.i, a.list.length);
+  if (cur.learn) {
+    const c = cur.item;
+    h += `<div class="qcard learn"><div class="row"><span class="newtag">New term</span>${ichip(c)}</div><div class="term">${esc(c.t)}</div><div class="def">${esc(c.d)}</div>${c.m ? `<div class="hook"><b>Memory hook:</b> ${esc(c.m)}</div>` : ""}
+      <div class="next"><button class="btn" data-act="qnext" autofocus>Got it, quiz me later</button></div></div><p class="kbd keyhint">Press Enter to continue. You'll see this one again as a question in a moment.</p></div>`;
+    return (app().innerHTML = h);
+  }
+  h += `<div class="qcard"><div class="row">${ichip(cur.item)}${cur.retry ? `<span class="chip">Second chance</span>` : ""}</div>${cur.ask ? `<p class="ask">${esc(cur.ask)}</p>` : ""}<p class="prompt ${cur.term ? "term" : ""}" ${cur.ask ? "" : 'style="margin-top:14px"'}>${esc(cur.prompt)}</p>` + optsHtml(cur, a.answered ? a.picked : null, "qans");
+  if (a.answered) {
+    const ok = a.picked === cur.ans;
+    h += `<div class="feedback ${ok ? "" : "no"}"><h4>${ok ? "Correct" : "Not quite"}</h4><p>${esc(cur.explain)}</p>${cur.hook ? `<div class="hook"><b>Memory hook:</b> ${esc(cur.hook)}</div>` : ""}${!ok && !cur.retry ? `<p class="muted" style="font-size:14px">This one will come back at the end of this run, and again in your next run.</p>` : ""}</div>
+    <div class="next"><button class="btn" data-act="qnext">${a.i + 1 >= a.list.length ? "See results" : "Next"}</button></div>`;
+  }
+  h += `</div><p class="kbd keyhint">Keys: 1 to 4 to answer, Enter for next.</p></div>`;
+  app().innerHTML = h;
+}
+function quizAnswer(i) {
+  const a = ACT, cur = a.list[a.i]; if (a.answered || cur.learn) return;
+  a.answered = true; a.picked = i; const ok = i === cur.ans;
+  if (!cur.retry) { grade(cur.item.id, ok); a.graded++; if (ok) a.correct++; else a.missed.push(cur); }
+  else addXP(ok ? 4 : 0);
+  if (!ok && !cur.retry && !a.requeued.has(cur.item.id)) { a.requeued.add(cur.item.id); const q2 = makeQ(cur.item); q2.retry = true; a.list.push(q2); }
+  save(); render();
+}
+function quizNext() {
+  const a = ACT; if (!a.list[a.i].learn && !a.answered) return;
+  if (a.list[a.i].learn) addXP(1);
+  a.i++; a.answered = false; a.picked = null;
+  if (a.i >= a.list.length) return finish(a.labIdx != null ? { title: a.title + " complete", score: a.correct, of: a.graded, xp: S.xp - a.xp0, missed: a.missed.map(q => q.item), again: "lab", againArg: a.labIdx, againLabel: "Back to the lab" } : { title: a.title + " complete", score: a.correct, of: a.graded, xp: S.xp - a.xp0, missed: a.missed.map(q => q.item), again: "run" });
+  window.scrollTo(0, 0); render();
+}
+function finish(r) { save(); ACT = Object.assign({ type: "done" }, r); window.scrollTo(0, 0); render(); }
+function renderDone() {
+  const a = ACT; const p = a.of ? a.score / a.of : 0;
+  let h = `<div class="play result"><div class="qcard"><h2>${esc(a.title)}</h2><div class="row" style="margin:16px 0;gap:30px"><div><div class="big">${a.of ? a.score + "/" + a.of : a.score}</div><span class="muted">${a.of ? pct(p) + " correct" : "score"}</span></div><div><div class="big">+${a.xp}</div><span class="muted">XP earned</span></div></div>`;
+  if (a.note) h += `<p>${a.note}</p>`;
+  if (a.tip) h += `<div class="hook"><b>Remember:</b> ${esc(a.tip)}</div>`;
+  if (a.missed && a.missed.length) h += `<h3 style="margin-top:20px;font-size:18px">Review what you missed</h3><div class="missed">${a.missed.map(it => `<div>${it.kind === "card" ? `<b>${esc(it.t)}</b>: ${esc(it.d)}${it.m ? `<br><em class="muted">${esc(it.m)}</em>` : ""}` : `<b>${esc(it.q)}</b><br>${esc(it.c[it.a])}. ${esc(it.e)}`}</div>`).join("")}</div>`;
+  h += `<div class="next" style="justify-content:flex-start;flex-wrap:wrap">${a.again ? `<button class="btn" data-act="again">${a.againLabel || (a.again === "run" ? "Start another run" : "Play again")}</button>` : ""}<button class="btn ghost" data-act="quit">Back</button></div></div></div>`;
+  app().innerHTML = h;
+}
+
+// blitz
+function startBlitz(d) {
+  const dt = DT(); const pool = ITEMS.filter(i => inPool(i) && (d ? inTrack(i, dt) && dom(oOf(i, dt)) === +d : true));
+  ACT = { type: "blitz", pool, d, q: makeQ(shuffle(pool)[0]), end: Date.now() + 60000, score: 0, total: 0, flash: null, xp0: S.xp, missed: [] };
+  clearInterval(examTimer); examTimer = setInterval(() => { if (!ACT || ACT.type !== "blitz") return clearInterval(examTimer); const left = Math.ceil((ACT.end - Date.now()) / 1000); if (left <= 0) { clearInterval(examTimer); endBlitz(); } else { const el = $("#bt"); if (el) el.textContent = left + "s"; } }, 250);
+  render();
+}
+function renderBlitz() {
+  const a = ACT, q = a.q, left = Math.max(0, Math.ceil((a.end - Date.now()) / 1000));
+  app().innerHTML = `<div class="play">${head(60 - left, 60, "")}<div class="row" style="justify-content:space-between;margin-bottom:10px"><span class="timer" id="bt">${left}s</span><span class="timer">Score ${a.score}</span></div>
+    <div class="qcard ${a.flash === "no" ? "shake" : ""}">${ichip(q.item)}${q.ask ? `<p class="ask">${esc(q.ask)}</p>` : ""}<p class="prompt ${q.term ? "term" : ""}">${esc(q.prompt)}</p>${optsHtml(q, a.flash ? a.picked : null, "bans")}</div><p class="kbd keyhint">Keys 1 to 4.</p></div>`;
+}
+function blitzAnswer(i) {
+  const a = ACT; if (a.flash) return; const ok = i === a.q.ans; a.picked = i; a.flash = ok ? "ok" : "no"; a.total++;
+  if (ok) a.score++; else a.missed.push(a.q.item);
+  grade(a.q.item.id, ok); render();
+  setTimeout(() => { if (ACT !== a) return; a.flash = null; a.q = makeQ(shuffle(a.pool)[0]); if (Date.now() < a.end) render(); }, ok ? 450 : 1300);
+}
+function endBlitz() {
+  const a = ACT; const prev = S.best.blitz || 0; if (a.score > prev) S.best.blitz = a.score;
+  finish({ title: "Time!", score: a.score, of: a.total, xp: S.xp - a.xp0, note: a.score > prev ? "New personal best." : "Personal best: " + prev + ".", missed: [...new Set(a.missed)], again: "blitz", againArg: a.d });
+}
+
+// match
+function startMatch(i) {
+  const set = PACK.matchSets[i]; const pairs = shuffle(CARDS.filter(c => inPool(c) && set.fams.includes(c.f))).slice(0, 6);
+  ACT = { type: "match", idx: i, set, pairs, left: shuffle(pairs), right: shuffle(pairs), sel: null, done: new Set(), miss: {}, mistakes: 0, bad: null, xp0: S.xp };
+  render();
+}
+function renderMatch() {
+  const a = ACT;
+  app().innerHTML = `<div class="play">${head(a.done.size, a.pairs.length)}<h2 style="font-size:22px;margin-bottom:4px">${esc(a.set.title)}</h2><p class="muted" style="margin-top:0">Tap a term, then tap its meaning.</p>
+    <div class="match"><div class="col">${a.left.map(c => `<button class="tile term ${a.done.has(c.id) ? "done" : ""} ${a.sel === c.id ? "sel" : ""} ${a.bad && a.bad[0] === c.id ? "bad shake" : ""}" data-act="ml" data-id="${c.id}" ${a.done.has(c.id) ? "disabled" : ""}>${esc(c.t)}</button>`).join("")}</div>
+    <div class="col">${a.right.map(c => `<button class="tile ${a.done.has(c.id) ? "done" : ""} ${a.bad && a.bad[1] === c.id ? "bad shake" : ""}" data-act="mr" data-id="${c.id}" ${a.done.has(c.id) ? "disabled" : ""}>${esc(c.f === "port" ? c.d : c.d)}</button>`).join("")}</div></div>
+    <p class="kbd">Mistakes: ${a.mistakes}</p></div>`;
+}
+function matchRight(id) {
+  const a = ACT; if (!a.sel) return toast("Tap a term on the left first");
+  if (a.sel === id) { a.done.add(id); grade(id, !a.miss[id]); a.sel = null; a.bad = null; }
+  else { a.miss[a.sel] = 1; a.mistakes++; a.bad = [a.sel, id]; a.sel = null; setTimeout(() => { if (ACT === a) { a.bad = null; render(); } }, 700); }
+  if (a.done.size === a.pairs.length) {
+    const sc = a.pairs.length - Object.keys(a.miss).length; const k = "m:" + a.set.title; S.best[k] = Math.max(S.best[k] || 0, sc);
+    return finish({ title: a.set.title + " matched", score: sc, of: a.pairs.length, xp: S.xp - a.xp0, note: "First-try matches count toward your review schedule. Mismatched terms come back in your next run.", missed: a.pairs.filter(p => a.miss[p.id]), again: "match", againArg: a.idx });
+  }
+  save(); render();
+}
+
+// sort
+function startSort(i) {
+  const s = PACK.sorts[i];
+  ACT = { type: "sort", idx: i, s, items: shuffle(s.items.map(([t, b]) => ({ t, b, placed: false, miss: 0 }))), sel: null, bad: null, mistakes: 0, xp0: S.xp };
+  render();
+}
+function renderSort() {
+  const a = ACT, s = a.s; const placed = a.items.filter(x => x.placed).length; const sel = a.sel != null ? a.items[a.sel] : null;
+  app().innerHTML = `<div class="play" style="max-width:980px">${head(placed, a.items.length)}<h2 style="font-size:22px;margin-bottom:4px">${esc(s.title)}</h2><p class="muted" style="margin-top:0">Tap an item, then tap the bucket it belongs in.</p>
+    <div class="tray">${a.items.map((x, i) => x.placed ? "" : `<button class="tile ${a.sel === i ? "sel" : ""} ${a.bad === i ? "bad shake" : ""}" data-act="si" data-i="${i}">${esc(x.t)}</button>`).join("") || `<span class="muted">All sorted.</span>`}</div>
+    ${sel && sel.miss >= 2 ? `<p class="hint">Hint: this one goes in ${esc(s.buckets[sel.b])}.</p>` : ""}
+    <div class="buckets">${s.buckets.map((b, bi) => `<button class="bucket" data-act="sb" data-i="${bi}"><h4>${esc(b)}</h4>${a.items.filter(x => x.placed && x.b === bi).map(x => `<span class="in">${esc(x.t)}</span>`).join("")}</button>`).join("")}</div>
+    <p class="kbd">Mistakes: ${a.mistakes}</p></div>`;
+}
+function sortBucket(bi) {
+  const a = ACT; if (a.sel == null) return toast("Tap an item first");
+  const it = a.items[a.sel];
+  if (it.b === bi) { it.placed = true; objStat(a.s, it.miss === 0); addXP(it.miss ? 2 : 5); a.sel = null; a.bad = null; touchDay(); }
+  else { it.miss++; a.mistakes++; a.bad = a.sel; setTimeout(() => { if (ACT === a) { a.bad = null; render(); } }, 600); }
+  if (a.items.every(x => x.placed)) {
+    const sc = a.items.filter(x => !x.miss).length; const k = "s:" + a.s.title; S.best[k] = Math.max(S.best[k] || 0, sc);
+    return finish({ title: a.s.title + " sorted", score: sc, of: a.items.length, xp: S.xp - a.xp0, tip: a.s.tip, again: "sort", againArg: a.idx });
+  }
+  save(); render();
+}
+
+// order
+function startOrder(i) { const s = PACK.orders[i]; ACT = { type: "order", idx: i, s, pool: shuffle(s.steps), seq: [], bad: null, mistakes: 0, xp0: S.xp }; render(); }
+function renderOrder() {
+  const a = ACT;
+  app().innerHTML = `<div class="play">${head(a.seq.length, a.s.steps.length)}<h2 style="font-size:22px;margin-bottom:4px">${esc(a.s.title)}</h2><p class="muted" style="margin-top:0">${esc(a.s.prompt)}</p>
+    <div class="seq">${a.seq.map(x => `<div>${esc(x)}</div>`).join("")}</div>
+    <div class="opts">${a.pool.filter(x => !a.seq.includes(x)).map(x => `<button class="tile ${a.bad === x ? "bad shake" : ""}" data-act="op" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+    ${a.mistakes >= 2 ? `<div class="hook" style="margin-top:14px"><b>Hint:</b> ${esc(a.s.tip)}</div>` : ""}<p class="kbd">Mistakes: ${a.mistakes}</p></div>`;
+}
+function orderPick(v) {
+  const a = ACT;
+  if (v === a.s.steps[a.seq.length]) { a.seq.push(v); a.bad = null; addXP(3); }
+  else { a.mistakes++; a.bad = v; setTimeout(() => { if (ACT === a) { a.bad = null; render(); } }, 600); }
+  if (a.seq.length === a.s.steps.length) {
+    const ok = a.mistakes === 0; objStat(a.s, ok); touchDay(); const sc = Math.max(0, a.s.steps.length - a.mistakes); const k = "o:" + a.s.title; S.best[k] = Math.max(S.best[k] || 0, sc);
+    return finish({ title: a.s.title, score: sc, of: a.s.steps.length, xp: S.xp - a.xp0, note: ok ? "Perfect order." : a.mistakes + " wrong taps. Run it again tomorrow until it's automatic.", tip: a.s.tip, again: "order", againArg: a.idx });
+  }
+  save(); render();
+}
+
+// scenarios
+function startScen(i) { const s = PACK.scenarios[i]; ACT = { type: "scen", idx: i, s, step: 0, tried: [], solved: false, first: 0, xp0: S.xp, choices: shuffle(s.steps[0][1].map((c, k) => k)) }; render(); }
+function renderScen() {
+  const a = ACT, st = a.s.steps[a.step]; const [prompt, choices] = st;
+  let h = `<div class="play">${head(a.step, a.s.steps.length)}<div class="qcard"><div class="row">${ichip(a.s)}<span class="chip">PBQ practice</span></div><h2 style="font-size:24px;margin:12px 0 6px">${esc(a.s.title)}</h2>
+    ${a.step === 0 ? `<p style="background:var(--sunk);padding:12px 14px;border-radius:8px">${esc(a.s.intro)}</p>` : `<p class="muted" style="font-size:15px">${esc(a.s.intro)}</p>`}
+    <p class="prompt">${esc(prompt)}</p><div class="opts">` +
+    a.choices.map((k, n) => { const c = choices[k]; const tried = a.tried.includes(k); const cls = tried ? (c[1] ? "right" : "wrong") : ""; return `<button class="opt ${cls}" data-act="sc" data-k="${k}" ${tried || a.solved ? "disabled" : ""}><span class="k">${n + 1}</span><span>${esc(c[0])}${tried ? `<br><small>${esc(c[2])}</small>` : ""}</span></button>`; }).join("") + `</div>`;
+  if (a.solved) h += `<div class="next"><button class="btn" data-act="scnext">${a.step + 1 >= a.s.steps.length ? "Finish" : "Next step"}</button></div>`;
+  app().innerHTML = h + `</div></div>`;
+}
+function scenPick(k) {
+  const a = ACT; if (a.solved || a.tried.includes(k)) return; a.tried.push(k);
+  const ok = a.s.steps[a.step][1][k][1];
+  if (ok) { a.solved = true; const first = a.tried.length === 1; if (first) a.first++; objStat(a.s, first); addXP(first ? 12 : 4); touchDay(); }
+  save(); render();
+}
+function scenNext() {
+  const a = ACT; a.step++;
+  if (a.step >= a.s.steps.length) { const k = "sc:" + a.s.id; S.best[k] = Math.max(S.best[k] || 0, a.first); return finish({ title: a.s.title, score: a.first, of: a.s.steps.length, xp: S.xp - a.xp0, note: "Score counts decisions you got right on the first try.", again: "scen", againArg: a.idx }); }
+  a.tried = []; a.solved = false; a.choices = shuffle(a.s.steps[a.step][1].map((c, k) => k)); window.scrollTo(0, 0); render();
+}
+
+// log hunter
+function startLog(i) { ACT = { type: "log", idx: i, l: PACK.logs[i], flags: new Set(), checked: false, xp0: S.xp }; render(); }
+function renderLog() {
+  const a = ACT, l = a.l;
+  let h = `<div class="play" style="max-width:980px">${head(a.checked ? 1 : 0, 1, a.checked ? "Reviewed" : "Hunting")}<div class="row">${ichip(l)}</div><h2 style="font-size:24px;margin:10px 0 4px">${esc(l.title)}</h2><p class="muted" style="margin-top:0">${esc(l.brief)}</p><div class="logbox">`;
+  l.lines.forEach(([t, bad, why], i) => {
+    let cls = a.flags.has(i) ? "flag" : "";
+    if (a.checked) cls = bad && a.flags.has(i) ? "tp" : !bad && a.flags.has(i) ? "fp" : bad ? "fn" : "";
+    h += `<button class="logline ${cls}" data-act="lg" data-i="${i}" ${a.checked ? "disabled" : ""}>${esc(t)}</button>`;
+  });
+  h += `</div>`;
+  if (a.checked) {
+    h += `<div class="panel" style="margin-top:14px"><p style="margin-top:0"><b>Green</b> = correctly flagged. <b>Red</b> = wrongly flagged. <b>Dashed red</b> = missed.</p>` + l.lines.map(([t, bad, why], i) => `<div><b style="font-family:var(--mono);font-size:13px">Line ${i + 1}${bad ? " (suspicious)" : " (normal)"}</b><p class="why">${esc(why)}</p></div>`).join("") + `</div>
+      <div class="next"><button class="btn" data-act="logdone">Finish</button></div>`;
+  } else h += `<div class="next"><span class="muted" style="align-self:center">${a.flags.size} flagged</span><button class="btn" data-act="logcheck">Check my answer</button></div>`;
+  app().innerHTML = h + `</div>`;
+}
+function logCheck() {
+  const a = ACT; a.checked = true; let tp = 0, fp = 0, fn = 0;
+  a.l.lines.forEach(([t, bad], i) => { if (bad && a.flags.has(i)) tp++; else if (!bad && a.flags.has(i)) fp++; else if (bad) fn++; });
+  a.tp = tp; a.fp = fp; a.fn = fn; const ok = fp === 0 && fn === 0; objStat(a.l, ok); addXP(tp * 4); touchDay(); save(); render();
+}
+function logDone() {
+  const a = ACT; const total = a.l.lines.filter(x => x[1]).length; const sc = Math.max(0, a.tp - a.fp); const k = "l:" + a.l.id; S.best[k] = Math.max(S.best[k] || 0, sc);
+  finish({ title: a.l.title, score: sc, of: total, xp: S.xp - a.xp0, note: `${a.tp} caught, ${a.fn} missed, ${a.fp} false alarms (false alarms subtract from your score).`, again: "log", againArg: a.idx });
+}
+
+// risk math
+function startDrill(i) { const d = PACK.drills[i]; ACT = { type: "drill", idx: i, d, n: 0, total: 5, score: 0, q: d.gen(), answered: false, xp0: S.xp }; render(); }
+function renderDrill() {
+  const a = ACT, q = a.q;
+  let h = `<div class="play">${head(a.n, a.total)}<div class="qcard"><div class="row">${ichip(a.d)}</div><p style="margin:14px 0 6px;font-size:19px">${esc(q.stem)}</p><p class="prompt"><b>${esc(q.prompt)}</b></p>${optsHtml(q, a.answered ? a.picked : null, "dans")}`;
+  if (a.answered) h += `<div class="feedback ${a.picked === q.ans ? "" : "no"}"><h4>${a.picked === q.ans ? "Correct" : "Not quite"}</h4><p>${esc(q.explain)}</p><div class="hook"><b>Remember:</b> ${esc(a.d.tip)}</div></div><div class="next"><button class="btn" data-act="dnext">Next</button></div>`;
+  app().innerHTML = h + `</div></div>`;
+}
+function drillAnswer(i) { const a = ACT; if (a.answered) return; a.answered = true; a.picked = i; const ok = i === a.q.ans; if (ok) a.score++; objStat(a.d, ok); addXP(ok ? 8 : 1); touchDay(); save(); render(); }
+function drillNext() { const a = ACT; a.n++; if (a.n >= a.total) { const k = "d:" + a.d.id; S.best[k] = Math.max(S.best[k] || 0, a.score); return finish({ title: a.d.title, score: a.score, of: a.total, xp: S.xp - a.xp0, tip: a.d.tip, again: "drill", againArg: a.idx }); } a.answered = false; a.q = a.d.gen(); render(); }
+
+// ---------- LABS ----------
+function labState(id) { return S.labs[id] || (S.labs[id] = { s: [], c: [], done: false }); }
+function startLab(i) { ACT = { type: "lab", idx: i, l: PACK.labs[i] }; window.scrollTo(0, 0); render(); }
+function renderLab() {
+  const l = ACT.l, st = labState(l.id);
+  const total = l.steps.length + l.cleanup.length, doneN = st.s.length + st.c.length;
+  const qn = PACK.mcq.filter(q => q.lab === l.id).length;
+  let h = `<div class="play" style="max-width:880px">${head(doneN, total, doneN + " / " + total + " checked")}
+    <section class="panel"><div class="row">${ichip(l)}</div><h2 style="font-size:26px;margin:10px 0 8px">${esc(l.title)}</h2>
+      <div class="row" style="gap:8px;margin-bottom:10px"><span class="chip">${esc(l.time)}</span><span class="chip">${esc(l.cost)}</span></div>
+      <p style="margin:0 0 6px"><b>Goal:</b> ${esc(l.goal)}</p><p class="muted" style="margin:0"><b>Why it matters:</b> ${esc(l.why)}</p></section>
+    ${st.done ? `<div class="feedback" style="margin-top:14px"><h4>Lab complete</h4><p>Nice work. Your cleanup is checked off, and this lab counts toward your map.</p></div>` : ""}
+    <div class="labwarn"><b>Before you start:</b> use your own AWS account, sign in with your admin identity (not root), keep your budget alert on, and do every cleanup step when you finish. AWS consoles change often; if a button has moved, look for the same setting nearby.</div>
+    <h3 class="labh">Steps</h3><ol class="steps">` +
+    l.steps.map((s, i) => { const on = st.s.includes(i); return `<li class="step ${on ? "on" : ""}"><button class="tick" aria-pressed="${on}" data-act="labstep" data-i="${i}" aria-label="Mark step ${i + 1} done"></button><div class="sbody"><h4>${i + 1}. ${esc(s[0])}</h4><p>${esc(s[1])}</p>${s[3] ? `<div class="codewrap"><pre class="code" id="code${i}">${esc(s[3])}</pre><button class="btn ghost small copy" data-act="copy" data-i="${i}">Copy</button></div>` : ""}<p class="see"><b>You should see:</b> ${esc(s[2])}</p></div></li>`; }).join("") + `</ol>`;
+  if (l.stuck && l.stuck.length) h += `<h3 class="labh">If you get stuck</h3>` + l.stuck.map(([p, f]) => `<details class="obj"><summary><span>${esc(p)}</span></summary><div class="objbody"><p style="margin:0">${esc(f)}</p></div></details>`).join("");
+  h += `<h3 class="labh">Cleanup (don't skip this)</h3><ol class="steps">` + l.cleanup.map((c, i) => { const on = st.c.includes(i); return `<li class="step ${on ? "on" : ""}"><button class="tick" aria-pressed="${on}" data-act="labclean" data-i="${i}" aria-label="Mark cleanup ${i + 1} done"></button><div class="sbody"><p style="margin:4px 0">${esc(c)}</p></div></li>`; }).join("") + `</ol>`;
+  if (qn) h += `<section class="panel" style="margin-top:16px"><h3 style="font-size:19px;margin-bottom:6px">Check your understanding</h3><p class="muted" style="margin-top:0">${qn} questions from this lab. They also join your daily reviews.</p><button class="btn" data-act="labquiz">Start the quiz</button></section>`;
+  app().innerHTML = h + `</div>`;
+}
+function labToggle(kind, i) {
+  const l = ACT.l, st = labState(l.id), arr = st[kind];
+  const k = arr.indexOf(i); if (k >= 0) arr.splice(k, 1); else { arr.push(i); addXP(3); touchDay(); }
+  if (!st.done && st.s.length === l.steps.length && st.c.length === l.cleanup.length) { st.done = true; addXP(50); objStat(l, true); toast("Lab complete: +50 XP"); }
+  save(); render();
+}
+function labCopy(i) {
+  const code = ACT.l.steps[i][3]; const pre = document.getElementById("code" + i);
+  const selectIt = () => { try { const r = document.createRange(); r.selectNodeContents(pre); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} toast("Selected. Press Ctrl+C (or long-press) to copy"); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => toast("Copied"), selectIt); else selectIt();
+}
+
+// practice exam
+function startExam(n, tr) {
+  tr = tr || DT();
+  const qs = [];
+  T(tr).domains.forEach(d => {
+    const k = Math.round(n * d.w / 100);
+    const mc = shuffle(ITEMS.filter(i => i.kind === "mcq" && oOf(i, tr) && dom(oOf(i, tr)) === d.n));
+    const cd = shuffle(CARDS.filter(i => oOf(i, tr) && dom(oOf(i, tr)) === d.n));
+    qs.push(...mc.slice(0, Math.ceil(k * 0.7)).concat(cd).slice(0, k));
+  });
+  if (qs.length < n) { const have = new Set(qs); qs.push(...shuffle(ITEMS.filter(i => oOf(i, tr) && !have.has(i))).slice(0, n - qs.length)); }
+  const list = shuffle(qs).slice(0, n).map(it => makeQ(it, it.kind === "card" ? Math.random() < 0.7 : null));
+  ACT = { type: "exam", tr, n: list.length, list, ans: Array(list.length).fill(null), flag: Array(list.length).fill(false), i: 0, end: Date.now() + Math.round(list.length * (T(tr).minutes / T(tr).questions) * 60000), xp0: S.xp };
+  clearInterval(examTimer);
+  examTimer = setInterval(() => { if (!ACT || ACT.type !== "exam") return clearInterval(examTimer); const left = ACT.end - Date.now(); if (left <= 0) { clearInterval(examTimer); submitExam(); } else { const el = $("#et"); if (el) el.textContent = fmtTime(left); } }, 500);
+  window.scrollTo(0, 0); render();
+}
+const fmtTime = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+function renderExamRun() {
+  const a = ACT, q = a.list[a.i]; const answered = a.ans.filter(x => x != null).length;
+  let h = `<div class="play">${head(answered, a.n, "")}<div class="row" style="justify-content:space-between;margin-bottom:10px"><span class="timer" id="et">${fmtTime(a.end - Date.now())}</span><span class="count">Question ${a.i + 1} of ${a.n}</span></div>
+    <div class="qcard">${q.ask ? `<p class="ask" style="margin-top:0">${esc(q.ask)}</p>` : ""}<p class="prompt ${q.term ? "term" : ""}">${esc(q.prompt)}</p><div class="opts">` +
+    q.options.map((o, i) => `<button class="opt" style="${a.ans[a.i] === i ? "border-color:var(--ink);background:var(--sunk)" : ""}" data-act="eans" data-i="${i}"><span class="k">${i + 1}</span><span>${esc(o)}</span></button>`).join("") + `</div>
+    <div class="next" style="justify-content:space-between;flex-wrap:wrap"><button class="btn ghost small" data-act="eflag">${a.flag[a.i] ? "Unflag" : "Flag for review"}</button><span class="row"><button class="btn ghost small" data-act="emove" data-d="-1" ${a.i === 0 ? "disabled" : ""}>Previous</button><button class="btn small" data-act="emove" data-d="1" ${a.i === a.n - 1 ? "disabled" : ""}>Next</button></span></div></div>
+    <div class="qnav">${a.list.map((_, i) => `<button class="${a.ans[i] != null ? "ans" : ""} ${i === a.i ? "cur" : ""} ${a.flag[i] ? "flg" : ""}" data-act="ego" data-i="${i}" aria-label="Question ${i + 1}">${i + 1}</button>`).join("")}</div>
+    <div class="next"><button class="btn" data-act="esubmit">Submit exam</button></div></div>`;
+  app().innerHTML = h;
+}
+function submitExam() {
+  clearInterval(examTimer); const a = ACT; let right = 0; const byD = {}; const missed = [];
+  a.list.forEach((q, i) => { const ok = a.ans[i] === q.ans; if (ok) right++; else missed.push(q.item); grade(q.item.id, ok); const d = dom(oOf(q.item, a.tr)); byD[d] = byD[d] || [0, 0]; byD[d][1]++; if (ok) byD[d][0]++; });
+  const p = right / a.n; const scaled = Math.round(100 + 900 * p); const passAt = T(a.tr).pass;
+  S.exams.push({ at: Date.now(), tr: a.tr, n: a.n, p: Math.round(p * 100), s: scaled });
+  const bars = T(a.tr).domains.map(d => { const v = byD[d.n] || [0, 0]; const r = v[1] ? v[0] / v[1] : 0; return `<div class="dbar d${d.n}"><span>${d.n}. ${esc(d.name)}</span><div class="bar"><i style="width:${r * 100}%"></i></div><b>${v[0]}/${v[1]}</b></div>`; }).join("");
+  finish({ title: T(a.tr).short + " " + (scaled >= passAt ? "practice exam: passing range" : "practice exam: keep training"), score: right, of: a.n, xp: S.xp - a.xp0,
+    note: `<b style="font-family:var(--head);font-size:22px">Approximate scaled score: ${scaled} / 1,000</b> (${passAt} passes). This is a straight-line estimate; the real exam uses scaled scoring across different exam forms.<div style="margin-top:12px">${bars}</div>`, missed, again: "exam", againArg: [a.n, a.tr] });
+}
+
+// ---------- events ----------
+const AGAIN = { run: () => startRun(), blitz: x => startBlitz(x), match: x => startMatch(x), sort: x => startSort(x), order: x => startOrder(x), scen: x => startScen(x), log: x => startLog(x), drill: x => startDrill(x), lab: x => startLab(x), exam: x => startExam(x[0], x[1]) };
+const ACTIONS = {
+  nav: d => { ACT = null; VIEW = d.v; SUB.train = null; window.scrollTo(0, 0); render(); },
+  welcomed: () => { S.welcomed = true; save(); render(); },
+  dloffline: () => downloadOffline(),
+  dlbackup: () => downloadBackup(),
+  run: d => startRun(d.d),
+  track: d => { let s = SEL().slice(); if (s.includes(d.t)) { if (s.length < 2) return toast("Keep at least one exam selected"); s = s.filter(t => t !== d.t); } else s.push(d.t); S.tracks = TRACKS.filter(t => s.includes(t)); save(); render(); },
+  maptr: d => { SUB.map = d.t; render(); },
+  room: d => { VIEW = "library"; SUB.lib = "obj"; ACT_OPEN = d.o; render(); const el = document.querySelector("details[open]"); if (el) el.scrollIntoView({ block: "start" }); },
+  drill1: d => { const dt = DT(); const items = buildRun(i => oOf(i, dt) === d.o, 15, 15); startQuiz("Objective " + d.o + " drill", items); },
+  mode: d => { SUB.train = d.m || null; window.scrollTo(0, 0); render(); },
+  libtab: d => { SUB.lib = d.t; render(); },
+  reset: () => { if (confirm("Erase all progress, XP, and history? This can't be undone.")) { const th = S.theme; S = blank(); S.theme = th; S.resetAt = Date.now(); save(); render(); toast("Progress reset"); } },
+  quit: () => { if (ACT && ACT.type === "exam" && !confirm("Leave the exam? Your answers will be lost.")) return; clearInterval(examTimer); ACT = null; render(); },
+  again: () => { const a = ACT; AGAIN[a.again](a.againArg); },
+  qans: d => quizAnswer(+d.i), qnext: () => quizNext(),
+  blitz: d => startBlitz(d.d), bans: d => blitzAnswer(+d.i),
+  match: d => startMatch(+d.i), ml: d => { ACT.sel = d.id; render(); }, mr: d => matchRight(d.id),
+  sort: d => startSort(+d.i), si: d => { ACT.sel = +d.i; render(); }, sb: d => sortBucket(+d.i),
+  order: d => startOrder(+d.i), op: d => orderPick(d.v),
+  scen: d => startScen(+d.i), sc: d => scenPick(+d.k), scnext: () => scenNext(),
+  log: d => startLog(+d.i), lg: d => { const i = +d.i; ACT.flags.has(i) ? ACT.flags.delete(i) : ACT.flags.add(i); render(); }, logcheck: () => logCheck(), logdone: () => logDone(),
+  lab: d => startLab(+d.i), labstep: d => labToggle("s", +d.i), labclean: d => labToggle("c", +d.i), copy: d => labCopy(+d.i),
+  labquiz: () => { const l = ACT.l; startQuiz(l.title + ": quiz", ITEMS.filter(q => q.lab === l.id), { learn: false }); ACT.labIdx = PACK.labs.indexOf(l); },
+  drill: d => startDrill(+d.i), dans: d => drillAnswer(+d.i), dnext: () => drillNext(),
+  exam: d => startExam(+d.n, d.tr), eans: d => { ACT.ans[ACT.i] = +d.i; render(); }, eflag: () => { ACT.flag[ACT.i] = !ACT.flag[ACT.i]; render(); },
+  emove: d => { ACT.i = Math.max(0, Math.min(ACT.n - 1, ACT.i + +d.d)); render(); }, ego: d => { ACT.i = +d.i; render(); },
+  esubmit: () => { const un = ACT.ans.filter(x => x == null).length; if (un && !confirm(un + " question(s) unanswered. Submit anyway?")) return; submitExam(); }
+};
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.tagName === "SELECT" || b.tagName === "INPUT") return;
+  const f = ACTIONS[b.dataset.act]; if (f) { e.preventDefault(); f(b.dataset, b); }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.act === "set") { const k = t.dataset.k; S[k] = k === "theme" ? t.value : +t.value; save(); render(); }
+  if (t.dataset.act === "examdate") { S.examDate = t.value; save(); render(); }
+  if (t.dataset.act === "importfile" && t.files && t.files[0]) { importBackup(t.files[0]); t.value = ""; }
+});
+document.addEventListener("keydown", e => {
+  if (!ACT || ["INPUT","SELECT","BUTTON","SUMMARY"].includes(e.target.tagName) && (e.key === "Enter" || e.key === " ")) return;
+  if (["INPUT","SELECT"].includes(e.target.tagName)) return;
+  const n = parseInt(e.key, 10);
+  const t = ACT.type;
+  if (n >= 1 && n <= 6) {
+    if (t === "quiz" && !ACT.list[ACT.i].learn && !ACT.answered && n <= ACT.list[ACT.i].options.length) return quizAnswer(n - 1);
+    if (t === "blitz" && n <= ACT.q.options.length) return blitzAnswer(n - 1);
+    if (t === "drill" && !ACT.answered && n <= 4) return drillAnswer(n - 1);
+    if (t === "exam" && n <= ACT.list[ACT.i].options.length) { ACT.ans[ACT.i] = n - 1; return render(); }
+    if (t === "scen" && !ACT.solved && n <= ACT.choices.length) return scenPick(ACT.choices[n - 1]);
+  }
+  if (e.key === "Enter" || e.key === " ") {
+    if (t === "quiz" && (ACT.answered || ACT.list[ACT.i].learn)) { e.preventDefault(); return quizNext(); }
+    if (t === "drill" && ACT.answered) { e.preventDefault(); return drillNext(); }
+    if (t === "scen" && ACT.solved) { e.preventDefault(); return scenNext(); }
+  }
+});
+
+render();
+if (!HOSTED_EMBED && /^https?:$/.test(location.protocol) && "serviceWorker" in navigator && window.top === window) {
+  fetch("manifest.webmanifest", { method: "HEAD" }).then(r => {
+    if (!r.ok) return;
+    const add = (rel, href) => { const l = document.createElement("link"); l.rel = rel; l.href = href; document.head.appendChild(l); };
+    add("manifest", "manifest.webmanifest"); add("apple-touch-icon", "icon-192.png");
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }).catch(() => {});
+}
+window.__game = { ITEMS, S: () => S, PACK }; // for debugging
+})();
+
+</script>
+</body>
+</html>
